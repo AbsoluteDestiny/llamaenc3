@@ -1,0 +1,44 @@
+{
+  "name": "LlamaEnc3",
+  "version": "3.0.0rc1",
+  "main": "./html/index.html",
+  "description": "An example module to illustrate the usage of a package.json",
+  "author": "Ian Roberts <ian@absolutedestiny.org>",
+  "window": {
+    "title": "node-webkit demo",
+    "icon": "link.png",
+    "toolbar": true,
+    "frame": true,
+    "width": 800,
+    "height": 800,
+    "position": "center",
+    "min_width": 1024,
+    "min_height": 768
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AbsoluteDestiny/LlamaEnc3"
+  },
+  "bugs": {
+    "url": "https://github.com/AbsoluteDestiny/LlamaEnc3/issues"
+  },
+  "dependencies": {
+    "async": "0.9.0",
+    "fluent-ffmpeg": "2.0.0-rc3",
+    "humanize-duration": "2.3.0",
+    "jQuery": "1.7.4",
+    "kew": "0.5.0-alpha.1",
+    "lodash": "2.4.1",
+    "node-ffprobe": "git://github.com/nuky89/node-ffprobe",
+    "q": "1.1.2",
+    "slice-file": "0.2.1",
+    "tmp": "0.0.24"
+  },
+  "preferGlobal": true,
+  "private": true,
+  "analyze": true,
+  "license": "MIT",
+  "devDependencies": {
+    "node-webkit-builder": "^1.0.6"
+  }
+}
