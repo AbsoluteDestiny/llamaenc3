@@ -2,6 +2,7 @@ var gui = require('nw.gui'); //or global.window.nwDispatcher.requireNwGui() (see
 // Get the current window
 var win = gui.Window.get();
 win.maximize();
+win.show();
 
 
 
