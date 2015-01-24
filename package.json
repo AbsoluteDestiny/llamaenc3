@@ -1,6 +1,6 @@
 {
   "name": "LlamaEnc3",
-  "version": "3.0.0rc1",
+  "version": "3.0.0rc2",
   "main": "./html/index.html",
   "description": "An ffmpeg wrapper for encoding videos for Vividcon and the Vidding community",
   "author": "Ian Roberts <ian@absolutedestiny.org>",
@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "async": "0.9.0",
-    "fluent-ffmpeg": "2.0.0-rc3",
+    "fluent-ffmpeg": "https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/tarball/master",
     "glob": "^4.3.5",
     "humanize-duration": "2.3.0",
     "jQuery": "1.7.4",
