@@ -14,11 +14,37 @@ var check = require('../js/check.js');
 var encode = require('../js/encode.js');
 var _ = require('lodash');
 var humanizeDuration = require("humanize-duration");
+var sanitize = require("sanitize-filename");
+var open = require('open');
 init.start();
 
-var VidModel = function(path) {
+var audioFile = function(llama, path) {
   var self = this;
+  self.llama = llama;
+  self.audioOK = ko.observable(false);
+  self.checked = ko.observable(false);
+};
+
+var VidModel = function(llama, path) {
+  var self = this;
+  self.llama = llama;
   self.path = ko.observable(path);
+  self.audioPath = ko.observable("");
+
+  self.videoOK = ko.observable(false);
+  self.audioOK = ko.observable(false);
+
+  self.scanned_ok = ko.observable(false);
+
+  self.readyToScan = ko.computed(function() {
+    return self.videoOK() && self.audioOK();
+  });
+  self.readyToScan.subscribe(function() {
+    if (self.readyToScan() && !self.scanned_ok()) {
+      check.scan(llama);
+    }
+  });
+
   self.thumbnails = ko.observableArray();
 
   //Thumbnail Management
@@ -32,7 +58,7 @@ var VidModel = function(path) {
   self.nframes = null;
   self.duration = ko.pureComputed(function() {
     if (self.data() && self.data().format) {
-      return self.data().format.duration;
+      return parseFloat(self.data().format.duration);
     } else {
       return 0;
     }
@@ -43,7 +69,7 @@ var VidModel = function(path) {
   self.title = ko.observable("");
   self.anonymous = ko.observable(false);
   self.author = ko.observable("");
-  self.vidder = ko.observable(function() {
+  self.vidder = ko.computed(function() {
     if (self.anonymous()) {
       return "Anonymous";
     }
@@ -56,11 +82,13 @@ var VidModel = function(path) {
   self.metadataReady = ko.pureComputed(function() {
     return self.vidder() && self.title();
   });
+  self.sourceFPS = ko.observable(0);
 
   // Size and AR
   // self.cropDetect = ko.observableArray();
   self.do_crop = ko.observable(false);
   self.startwidth = ko.observable("");
+  self.sourceSar = ko.observable();
   self.customPar = ko.observable(1.0);
   self.chosenPar = ko.observable(1.0);
   self.par = ko.pureComputed(function() {
@@ -92,7 +120,7 @@ var VidModel = function(path) {
     // Final width:Final Height:X:Y
     if (self.do_crop()) {
       var crop = self.newWidth() + ":" + self.newHeight() + ":" + self.cropl() + ":" + self.cropt();
-      console.log(crop);
+      // console.log(crop);
       return crop;
     }
     return "";
@@ -107,14 +135,14 @@ var VidModel = function(path) {
   self.bff = ko.observable(0);
   self.suggest_fo = ko.observable("");
   self.fo_choice = ko.observable("");
-  self.scanned_ok = ko.observable(false);
+  
   self.parOptions = ko.observableArray([
-    {value: 1.0, text: "Square Pixels (1.0)"},
-    {value: 10/11, text: "4:3 NTSC DVD (0.9090)"},
-    {value: 40/33, text: "16:9 NTSC DVD (1.2101)"},
-    {value: 59/54, text: "4:3 PAL DVD (1.0925)"},
-    {value: 118/81, text: "16:9 PAL DVD (1.45679)"},
-    {value: 4/3, text: "16:9 HDV / HDCAM (1.333)"},
+    {value: 1, text: "Square Pixels (1.0)"},
+    {value: 8/9, text: "4:3 NTSC DVD (0.9090)"},
+    {value: 32/27, text: "16:9 NTSC DVD (1.2101)"},
+    {value: 16/15, text: "4:3 PAL DVD (1.0925)"},
+    {value: 64/45, text: "16:9 PAL DVD (1.45679)"},
+    // {value: 4/3, text: "16:9 HDV / HDCAM (1.333)"},
     {value: 0, text: "Custom PAR"}
   ]);
   self.width = ko.pureComputed(function() {
@@ -143,14 +171,38 @@ var VidModel = function(path) {
   self.convertable = ko.computed(function() {
     return self.fieldOptionsReady() && self.metadataReady();
   });
+
 };
 
+
+var StepModel = function(title, done_test) {
+  var self = this;
+  self.title = title;
+  self.needs = ko.observableArray([]);
+  self.done = ko.observable(false);
+
+  self.ready = ko.pureComputed(function() {
+    var hasNeeds = false;
+    for (var i = self.needs().length - 1; i >= 0; i--) {
+      if (!self.needs()[i].done()) {
+        hasNeeds = true;
+        break;
+      }
+    }
+    return !hasNeeds || self.done();
+  });
+
+  if (done_test) {
+    self.doneTest = ko.computed(done_test);
+  }
+};
 
 var LLamaModel = function () {
   var self = this;
   self.ffmpeg = ko.observable(false);
   self.ffprobe = ko.observable(false);
-
+  self.vid = ko.observable("");
+  self.vidPath = ko.observable("");
   //Status stuff
   self.in_progress = ko.observable(false);
   self.progress_title = ko.observable("");
@@ -170,19 +222,40 @@ var LLamaModel = function () {
       return "calculating...";
     }
   });
+
+  // User Flow Progress
   self.step = ko.observable(0);
+  self.currentStep = ko.pureComputed(function() {
+    if (startwidth.steps().length < self.step())
+      return;
+    return self.steps()[self.step()];
+  });
   self.step.subscribe(function() {
     $(function() {
       $("select").select2({dropdownCssClass: 'dropdown-inverse'});
       $('[data-toggle="switch"]').bootstrapSwitch();
     });
   });
-  self.steps = ko.observableArray([
-    "Choose Vid",
-    "Field Options",
-    "Cropping",
-    "Encode"]);
-  
+  self.steps = ko.observableArray();
+
+  var step1 = new StepModel("Choose Vid");
+  var step2 = new StepModel("Field Options", function() {
+    if (self.vidPath() && self.vid() && self.vid().fo_choice()) {
+      step2.done(true);
+    }
+  });
+  var step3 = new StepModel("Cropping");
+  var step4 = new StepModel("Encode");
+  var step5 = new StepModel("Done");
+  step2.needs.push(step1);
+  step3.needs.push(step1);
+  step4.needs.push(step1);
+  step5.needs.push(step1);
+  step4.needs.push(step2);
+  step5.needs.push(step4);
+  self.steps([step1, step2, step3, step4, step5]);
+
+
   // Temporary file management
   self.logpath = ko.observable("");
   self.logpath_clean = function() { };
@@ -190,8 +263,11 @@ var LLamaModel = function () {
   self.thumbpath_clean = function() { };
   
   // Vid info
-  self.vid = ko.observable("");
-  self.vidPath = ko.observable("");
+  self.vid.subscribe(function() {
+    if (self.vid()) {
+      step1.done(true);
+    }
+  });
   self.vidPath.extend({ notify: 'always' });
   self.clearVid = function() {
     self.step(0);
@@ -204,7 +280,7 @@ var LLamaModel = function () {
   self.vidPath.subscribe(function() {
     if (self.vidPath()) {
       self.clearVid();
-      self.vid(new VidModel(self.vidPath()));
+      self.vid(new VidModel(self, self.vidPath()));
       file.setupTempFiles(self);
       check.probe(self);
     }
@@ -216,9 +292,20 @@ var LLamaModel = function () {
   self.outPath = ko.observable("");
   self.outPath.extend({ notify: 'always' });
   self.outPath.subscribe(function() {
-    console.log("encoding");
+    // console.log("encoding");
     encode.make_mp4(self);
   });
+  self.open = function() {
+    if (self.outPath()) {
+      open(self.outPath());
+    }
+  };
+
+  self.opendir = function() {
+    if (self.outPath()) {
+      open(path.dirname(self.outPath()));
+    }
+  };
 
   self.largeVid = ko.pureComputed(function() {
     if (self.vid()) {
@@ -235,8 +322,30 @@ var LLamaModel = function () {
     return _.map(
       _.where(self.vvcShows(), {'con_year': self.vidshowYear()}),
       function(item) {
-        return {'text' : item.name, 'value' : item};
+        return {'text' : item.name, 'value' : self.vvcShows().indexOf(item)};
       });
+  });
+  self.vidshowChoice = ko.observable("");
+  self.vidshow = ko.computed(function() {
+    if (self.vidshowChoice()) {
+      return self.vvcShows()[self.vidshowChoice()];
+    }
+  });
+  self.showname = ko.computed(function() {
+    if (self.vid() && self.vidshow()) {
+      return self.vidshow().con_year + ": " + self.vidshow().name.trim();
+    }
+    return "";
+  });
+  self.suggestedFileName = ko.computed(function() {
+    var name = "Vid";
+    if (self.vid() && self.vid().vidder() && self.vid().title()) {
+      name = self.vid().vidder().trim() + "-" + self.vid().title().trim();
+      if (self.vidshow()) {
+        name = "[" + self.showname() + "]" + name;
+      }
+    }
+    return sanitize(name) + ".m4v";
   });
 
   $.get("http://vividcon.info/connect/showlist/1/", function(data) {
@@ -291,10 +400,6 @@ var LLamaModel = function () {
     }
   };
 
-  self.encode = function() {
-    console.log("encoding");
-  };
-
   exec('ffmpeg -version', function (error, stdout, stderr) {
     // console.log("checking ffmpeg");
     if (!error) {
@@ -320,4 +425,5 @@ var LLamaModel = function () {
   });
 };
 
-ko.applyBindings(new LLamaModel());
+var LM = new LLamaModel();
+ko.applyBindings(LM);

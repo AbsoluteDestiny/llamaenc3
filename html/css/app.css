@@ -1,3 +1,14 @@
+#llamaHeader {
+    height: 170px;
+}
+
+#llamaMain {
+    position: absolute;
+    top: 170px;
+    width: 100%;
+    min-height: calc(100% - 170px);
+}
+
 input[type=number]:focus,
 input[type=range]:focus {
     outline: none;
@@ -177,7 +188,7 @@ ol.stepTrack li.stepTrack-doing:before {
 
 .vMiddle {
     position: absolute;
-    top: 50vh;
+    top: 50%;
     -webkit-transform: translateY(-100%);
     padding: 0 32px;
     text-align: center;
@@ -190,11 +201,11 @@ ol.stepTrack li.stepTrack-doing:before {
 
 #holder {
     width: 100%;
-    min-height: 50vh;
     display: flex;
     text-align: center;
     align-items: center;
     justify-content: center;
+    height: 100%;
 }
 
 .custom-file-input::-webkit-file-upload-button {
@@ -225,6 +236,11 @@ ol.stepTrack li.stepTrack-doing:before {
 .drop-panel {
     border: 6px dashed silver;
     border-radius: 5px;
+    position: absolute;
+    left: 1em;
+    right: 1em;
+    bottom: 0;
+    top: 0;
 }
 
 div::-webkit-scrollbar {

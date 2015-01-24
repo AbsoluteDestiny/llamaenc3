@@ -26,7 +26,7 @@
 		<script type='text/javascript' src="js/knockout-3.2.0.js"></script>
 	</head>
 	<body style="display:none" data-bind="visible: true">
-		<div class="container">
+		<div class="container" id="llamaHeader">
 			<div class="row">
 				<div class="col-xs-12">
 					<nav class="navbar navbar-default" role="navigation">
@@ -42,298 +42,306 @@
 			</div>
 			<div class="row">
 				<div class="col-xs-12">
-					<ol class="stepTrack" data-stepTrack-steps="4" data-bind="foreach: steps"><li data-bind="css: $index() === $root.step() ? 'stepTrack-doing' : $index() < $root.step() ? 'stepTrack-done' : 'stepTrack-todo'"><a href="#" data-bind="text: $data, click: function() { $root.step($index());}"></a></li></ol>
+					<ol class="stepTrack" data-bind="attr: {'data-stepTrack-steps': steps().length}, foreach: steps">
+						<!-- ko if: $data.ready() -->
+						<li data-bind="css: $index() === $root.step() ? 'stepTrack-doing' : $data.done() ? 'stepTrack-done' : 'stepTrack-todo', click: function() { $root.step($index());}">
+							<strong><a href="#" data-bind="text: $data.title, click: function() { $root.step($index());}"></a></strong>
+						</li>
+    					<!-- /ko -->
+    					<!-- ko if: !$data.ready() -->
+						<li data-bind="css: $index() === $root.step() ? 'stepTrack-doing' : $data.done() ? 'stepTrack-done' : 'stepTrack-todo'">
+							<span data-bind="visible: !$data.ready(), text: $data.title"></span>
+						</li>
+						<!-- /ko -->
+					</ol>
 				</div>
 			</div>
 		</div>
-		<div class="container" data-bind="visible: step() === 0">
-			<div class="row">
-				<div class="col-xs-12" data-bind="visible: !in_progress()">
-					<div class="panel panel-default drop-panel">
-					  <div id="holder" class="panel-body">
+
+		<div id="llamaMain">
+			<div class="container" data-bind="visible: step() === 0">
+				<div class="panel panel-default drop-panel">
+					<div id="holder" class="panel-body">
 						<p>Drag and drop a video file here or
-								<input class="sr-only" id="open" class="custom-file-input" type="file" accept="video/*" data-bind="event: {change: vidPicked}"/>
+								<input class="sr-only" id="open" class="custom-file-input" type="file" accept=".m2v,.mpg,video/*" data-bind="event: {change: vidPicked}"/>
 								<button class="btn btn-info" id="fileSelect">click to choose a file</button>
-							</p>
-					  </div>
-					</div>
-						<script>
-						// prevent default behavior from changing page on dropped file
-						window.ondragover = function(e) { e.preventDefault(); return false };
-						window.ondrop = function(e) { e.preventDefault(); return false };
-
-						var holder = document.getElementById('holder');
-						holder.ondragover = function () { this.className = 'hover'; return false; };
-						holder.ondragleave = function () { this.className = ''; return false; };
-						holder.ondrop = function (e) {
-							e.preventDefault();
-							document.getElementById('open').files = e.dataTransfer.files;
-						  return false;
-						};
-						document.querySelector('#fileSelect').addEventListener('click', function(e) {
-						  // Use the native click() of the file input.
-						  document.querySelector('#open').click();
-						}, false);
-						</script>
+						</p>
 					</div>
 				</div>
+				<script>
+				// prevent default behavior from changing page on dropped file
+				window.ondragover = function(e) { e.preventDefault(); return false };
+				window.ondrop = function(e) { e.preventDefault(); return false };
+
+				var holder = document.getElementById('holder');
+				holder.ondragover = function () { this.className = 'hover'; return false; };
+				holder.ondragleave = function () { this.className = ''; return false; };
+				holder.ondrop = function (e) {
+					e.preventDefault();
+					document.getElementById('open').files = e.dataTransfer.files;
+				  return false;
+				};
+				document.querySelector('#fileSelect').addEventListener('click', function(e) {
+				  // Use the native click() of the file input.
+				  document.querySelector('#open').click();
+				}, false);
+				</script>	
 			</div>
-			<div data-bind="if: vid(), visible: in_progress()" style="position: absolute; top:0; left: 0; right: 0; bottom: 0; -webkit-transform-style: preserve-3d; background: rgba(255,255,255,0.75)">
-				<div class="vMiddle">
-					<div class="container">
+			<div class="container" data-bind="visible: step() === 1">
+				<div class="row" data-bind="if: vid()">
+					<div class="col-xs-12" data-bind="if: vid().scanned_ok()">
+						<form>
+
+									<fieldset>
+										<legend>Fields and Interlacing:</legend>
+												<p class="help-block">The most likely choice is marked bold below.</p>
+												<div class="row">
+													<div class="col-xs-12 col-md-11 col-md-offset-1">
+														<label class="radio" data-bind="style: { fontWeight: vid().suggest_fo() == 'progressive' ? 'bold' : ''}">
+															<input class="custom-radio" type="radio" name="fo" value="progressive" data-bind="checked: vid().fo_choice"/>Progressive (no interlacing)
+															<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+														</label>
+														<label class="radio" data-bind="style: { fontWeight: vid().suggest_fo() == 'tff' ? 'bold' : ''}">
+															<input class="custom-radio" type="radio" name="fo" value="tff" data-bind="checked: vid().fo_choice"/>Interlaced - Top Field First
+															<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+														</label>
+														<label class="radio" data-bind="style: { fontWeight: vid().suggest_fo() == 'bff' ? 'bold' : ''}">
+															<input class="custom-radio" type="radio" name="fo" value="bff" data-bind="checked: vid().fo_choice"/>Interlaced - Bottom Field First
+															<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+														</label>
+													</div>
+												</div>
+												<p class="help-block">Note: interlaced content (not progressive) will be deinterlaced upon encoding.</p>
+									</fieldset>
+									<div class="form-group clearfix">
+										<button type="button" class="btn btn-danger pull-left" data-bind="click: clearVid">Pick a different vid</button>
+										<button type="button" class="btn btn-primary btn-lg pull-right" data-bind="disable: !vid().fieldOptionsReady(), click: function() { step(2); }">Continue</button>
+									</div>
+
+						</form> 
+					</div>
+				</div>
+				
+			</div>
+			<!-- /.container -->
+			<div class="container" data-bind="visible: step() === 2">
+				<div class="row" data-bind="if: vid()">
+					<div class="col-xs-12" data-bind="if: vid().scanned_ok()">
 						<div class="row">
-							<div class="col-xs-12 col-md-10 col-md-offset-1">
-								<h5 data-bind="text: outPath() ? 'Encoding ' + outPath() : 'Analysing ' + vid().path()"></h5>
-								<h6>ETA: <span data-bind="text: ETA()"></span></h6>
-								<div class="progress">
-									<div class="progress-bar" data-bind="style: {width: progress() + '%'}">
-
-									</div>
-								</div>
-								<button class="btn btn-danger" data-bind="click: function() { $root.ffcancel(); $root.clearVid();}">Cancel Scan</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>	
-		</div>
-		<div class="container" data-bind="visible: step() === 1">
-			<div class="row" data-bind="if: vid()">
-				<div class="col-xs-12" data-bind="if: vid().scanned_ok()">
-					<form>
-<!-- 						<div class="row">
-							<div class="col-xs-12"> -->
-								
-<!-- 							</div>
-						</div> -->
-<!-- 					<div class="row">
-						<div class="col-xs-12"> -->
-								<fieldset>
-									<legend>Fields and Interlacing:</legend>
-											<p class="help-block">The most likely choice is marked bold below.</p>
-											<div class="row">
-												<div class="col-xs-12 col-md-11 col-md-offset-1">
-													<label class="radio" data-bind="style: { fontWeight: vid().suggest_fo() == 'progressive' ? 'bold' : ''}">
-														<input class="custom-radio" type="radio" name="fo" value="progressive" data-bind="checked: vid().fo_choice"/>Progressive (no interlacing)
-														<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
-													</label>
-													<label class="radio" data-bind="style: { fontWeight: vid().suggest_fo() == 'tff' ? 'bold' : ''}">
-														<input class="custom-radio" type="radio" name="fo" value="tff" data-bind="checked: vid().fo_choice"/>Interlaced - Top Field First
-														<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
-													</label>
-													<label class="radio" data-bind="style: { fontWeight: vid().suggest_fo() == 'bff' ? 'bold' : ''}">
-														<input class="custom-radio" type="radio" name="fo" value="bff" data-bind="checked: vid().fo_choice"/>Interlaced - Bottom Field First
-														<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
-													</label>
-												</div>
-											</div>
-											<p class="help-block">Note: interlaced content (not progressive) will be deinterlaced upon encoding.</p>
-								</fieldset>
+							<div class="col-xs-12 col-md-4">
 								<div class="form-group clearfix">
-									<button type="button" class="btn btn-danger pull-left" data-bind="click: clearVid">Pick a different vid</button>
-									<button type="button" class="btn btn-primary btn-lg pull-right" data-bind="disable: !vid().fieldOptionsReady(), click: function() { step(2); }">Continue</button>
-								</div>
-<!-- 							</div>
-					</div> -->
-					</form> 
-				</div>
-			</div>
-			
-		</div>
-		<!-- /.container -->
-		<div class="container" data-bind="visible: step() === 2">
-			<div class="row" data-bind="if: vid()">
-				<div class="col-xs-12" data-bind="if: vid().scanned_ok()">
-					<div class="row">
-						<div class="col-xs-12 col-md-4">
-							<div class="form-group clearfix">
-								<label for="arselect">Source Aspect Ratio</label>
-								<select id="arselect" class="form-control select select-primary select-block mbl" data-bind="options: vid().parOptions,
-												 optionsText: 'text',
-												 optionsValue: 'value',
-												 value: vid().chosenPar">
+									<label for="arselect">Source Aspect Ratio</label>
+									<select id="arselect" class="form-control select select-primary select-block mbl" data-bind="options: vid().parOptions,
+													 optionsText: 'text',
+													 optionsValue: 'value',
+													 value: vid().chosenPar">
 
-								</select>
-							</div>
-							<div class="form-group clearfix" data-bind="visible: vid().chosenPar() === 0">
-								<label for="cparinput">Custom PAR</label>
-								<input id="cparinput" type="number" data-bind="value: vid().customPar, valueUpdate: 'input'" max="4" min="0.2">
+									</select>
+								</div>
+								<div class="form-group clearfix" data-bind="visible: vid().chosenPar() === 0">
+									<label for="cparinput">Custom PAR</label>
+									<input id="cparinput" type="number" data-bind="textInput: vid().customPar" max="4" min="0.2">
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-		<div class="container-fluid" data-bind="visible: step() === 2, style: {'width': largeVid, margin: '0 auto'}">
-			<div class="row" data-bind="if: vid()">
-				<div class="col-xs-12" data-bind="if: vid().scanned_ok()">
-					<div class="row">
-						<div class="col-xs-12 col-md-6">
-							<label class="checkbox" for="checkbox1">
-								<input type="checkbox" value="" id="checkbox1" data-toggle="checkbox" class="custom-checkbox" data-bind="checked: vid().do_crop">
-								<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
-								Crop Vid
-							</label>
+			<div class="container-fluid" data-bind="visible: step() === 2, style: {'width': largeVid, margin: '0 auto'}">
+				<div class="row" data-bind="if: vid()">
+					<div class="col-xs-12" data-bind="if: vid().scanned_ok()">
+						<div class="row">
+							<div class="col-xs-12 col-md-6">
+								<label class="checkbox" for="checkbox1">
+									<input type="checkbox" value="" id="checkbox1" data-toggle="checkbox" class="custom-checkbox" data-bind="checked: vid().do_crop">
+									<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+									Crop Vid
+								</label>
+							</div>
 						</div>
-					</div>
-					<div class="row tacenter">
-						<div class="col-xs-12">
-								<div data-bind="visible: vid().do_crop(), style: {width: vid().scaledstartwidth() + 100 + 'px', height: '74px', position: 'relative', margin: '0 auto'}">
-									<div class="rangeTop">
-										<div class="rangeRow" data-bind="style: {width: (vid().scaledstartwidth() / 2) + 'px', float: 'left'}">
-											<div class="form-group tacenter">
-												<label for="cropl">Left</label>
-												<input id="cropl" type="number" step="2" min="0" onchange="this.value = 2 * Math.ceil(this.value/2)" data-bind="attr: {max: vid().startwidth() / 2}, value: vid().cropl, valueUpdate: 'input'">
-												<input type="range" class="vHorizontal" min="0" step="2" data-bind="attr: {max: vid().startwidth() / 2}, value: vid().cropl, style: {width: vid().scaledstartwidth() / 2}"/>
-											</div>
-										</div>
-										<div class="rangeRow" data-bind="style: {width: (vid().scaledstartwidth() / 2) + 'px', float: 'left'}">
-											<div class="form-group tacenter">
-												<label for="cropr">Right</label>
-												<input id="cropr" type="number" step="2" min="0" onchange="this.value = 2 * Math.ceil(this.value/2)" data-bind="attr: {max: vid().startwidth() / 2}, value: vid().cropr, valueUpdate: 'input'">
-												<input type="range" class="vHorizontal negative" min="0" step="2" data-bind="attr: {max: vid().startwidth() / 2}, value: vid().cropr, style: {width: vid().scaledstartwidth() / 2}"/>
-											</div>
-										</div>
-									</div>
-								</div>
-								<div class="previewContainer" data-bind="style: {width: vid().scaledstartwidth() + 100 + 'px', height: vid().scaledstartheight() +  'px', 'margin-bottom': '42px'}">
-									<div class="rangeLeft" data-bind="if: vid().do_crop()">
-										<div class="row" data-bind="style: {height: vid().scaledstartheight()/2 + 'px'}">
-											<div class="col-xs-9 rangeRow">
+						<div class="row tacenter">
+							<div class="col-xs-12">
+									<div data-bind="visible: vid().do_crop(), style: {width: vid().scaledstartwidth() + 100 + 'px', height: '74px', position: 'relative', margin: '0 auto'}">
+										<div class="rangeTop">
+											<div class="rangeRow" data-bind="style: {width: (vid().scaledstartwidth() / 2) + 'px', float: 'left'}">
 												<div class="form-group tacenter">
-													<label for="cropt">Top</label>
-													<input id="cropt" type="number" step="2" min="0" onchange="this.value = 2 * Math.ceil(this.value/2)" data-bind="attr: {max: vid().scaledstartwidth() / 2}, value: vid().cropt, valueUpdate: 'input'">
+													<label for="cropl">Left</label>
+													<input id="cropl" type="number" step="2" min="0" onchange="this.value = 2 * Math.ceil(this.value/2)" data-bind="attr: {max: vid().startwidth() / 2}, textInput: vid().cropl">
+													<input type="range" class="vHorizontal" min="0" step="2" data-bind="attr: {max: vid().startwidth() / 2}, textInput: vid().cropl, style: {width: vid().scaledstartwidth() / 2}"/>
 												</div>
 											</div>
-											<div class="col-xs-3 rangeRow">
-												<input type="range" class="vVertical negative" min="0" step="2" data-bind="attr: {max: vid().scaledstartwidth() / 2}, value: vid().cropt, style: {width: vid().scaledstartheight() / 2}"/>
-											</div>
-										</div>
-										<div class="row" data-bind="style: {height: vid().scaledstartheight()/2 + 'px'}">
-											<div class="col-xs-9 rangeRow">
-												<label for="cropb">Bottom</label>
-												<input id="cropb" type="number" step="2" min="0" onchange="this.value = 2 * Math.ceil(this.value/2)" data-bind="attr: {max: vid().scaledstartwidth() / 2}, value: vid().cropb, valueUpdate: 'input'">
-											</div>
-											<div class="col-xs-3 rangeRow">
-												<input type="range" class="vVertical" min="0" step="2" data-bind="attr: {max: vid().scaledstartwidth() / 2}, value: vid().cropb, style: {width: vid().scaledstartheight() / 2}"/>
+											<div class="rangeRow" data-bind="style: {width: (vid().scaledstartwidth() / 2) + 'px', float: 'left'}">
+												<div class="form-group tacenter">
+													<label for="cropr">Right</label>
+													<input id="cropr" type="number" step="2" min="0" onchange="this.value = 2 * Math.ceil(this.value/2)" data-bind="attr: {max: vid().startwidth() / 2}, textInput: vid().cropr">
+													<input type="range" class="vHorizontal negative" min="0" step="2" data-bind="attr: {max: vid().startwidth() / 2}, textInput: vid().cropr, style: {width: vid().scaledstartwidth() / 2}"/>
+												</div>
 											</div>
 										</div>
 									</div>
-									<div data-bind="style: {width: vid().scaledstartwidth() +  'px', height: vid().scaledstartheight() + 'px', position: 'absolute', bottom: 0, right: 0}">
-										<img alt="preview image" data-bind="attr: {src: $root.thumbpath() + '/' + $root.vid().currentThumb()}, style: {width: $root.vid().scaledstartwidth() + 'px', height: $root.vid().scaledstartheight() + 'px'}">
-									</div>
-									<!-- <div data-bind="style: {width: vid().scaledstartwidth() +  'px', height: vid().scaledstartheight() + 'px', position: 'absolute', bottom: 0, right: 0}">
-										<div id="carousel-example-generic" class="carousel slide" data-ride="carousel" data-interval="false">
-										  <div class="carousel-inner" role="listbox" data-bind="foreach: { data: vid().thumbnails, as: 'thumbnail' }">
-											<div class="item" data-bind="css: {'active': $index() == 0 }">
-											  <img alt="preview image" data-bind="attr: {src: $root.thumbpath() + '/' + thumbnail}, style: {width: $root.vid().scaledstartwidth() + 'px', height: $root.vid().scaledstartheight() + 'px'}">
+									<div class="previewContainer" data-bind="style: {width: vid().scaledstartwidth() + 100 + 'px', height: vid().scaledstartheight() +  'px', 'margin-bottom': '42px'}">
+										<div class="rangeLeft" data-bind="if: vid().do_crop()">
+											<div class="row" data-bind="style: {height: vid().scaledstartheight()/2 + 'px'}">
+												<div class="col-xs-9 rangeRow">
+													<div class="form-group tacenter">
+														<label for="cropt">Top</label>
+														<input id="cropt" type="number" step="2" min="0" onchange="this.value = 2 * Math.ceil(this.value/2)" data-bind="attr: {max: vid().scaledstartwidth() / 2}, textInput: vid().cropt">
+													</div>
+												</div>
+												<div class="col-xs-3 rangeRow">
+													<input type="range" class="vVertical negative" min="0" step="2" data-bind="attr: {max: vid().scaledstartwidth() / 2}, textInput: vid().cropt, style: {width: vid().scaledstartheight() / 2}"/>
+												</div>
 											</div>
-										  </div>
-										  
+											<div class="row" data-bind="style: {height: vid().scaledstartheight()/2 + 'px'}">
+												<div class="col-xs-9 rangeRow">
+													<label for="cropb">Bottom</label>
+													<input id="cropb" type="number" step="2" min="0" onchange="this.value = 2 * Math.ceil(this.value/2)" data-bind="attr: {max: vid().scaledstartwidth() / 2}, textInput: vid().cropb">
+												</div>
+												<div class="col-xs-3 rangeRow">
+													<input type="range" class="vVertical" min="0" step="2" data-bind="attr: {max: vid().scaledstartwidth() / 2}, textInput: vid().cropb, style: {width: vid().scaledstartheight() / 2}"/>
+												</div>
+											</div>
 										</div>
-									</div> -->
-									<div class="cropzone" id="croppingt" data-bind="visible: vid().do_crop() && vid().cropt() > 0, style: {height: vid().cropt() + 'px', top:'0px', left: '100px', right: 0}"></div>
-									<div class="cropzone" id="croppingb" data-bind="visible: vid().do_crop() && vid().cropb() > 0, style: {height: vid().cropb() + 'px', height:vid().cropb()+ 'px', bottom: 0, left:'100px', right: 0}"></div>
-									<div class="cropzone" id="croppingl" data-bind="visible: vid().do_crop() && vid().cropl() > 0, style: {width: vid().cropl() * vid().par() + 'px', top:'0px', bottom: 0, left: '100px'}"></div>
-									<div class="cropzone" id="croppingr" data-bind="visible: vid().do_crop() && vid().cropr() > 0, style: {width: vid().cropr() * vid().par() + 'px', top:'0px', bottom: 0, right: 0}"></div>
-									<!-- <div class="row">
-										<div data-bind="style: {width: vid().scaledstartwidth() + 'px', height: '32px', top: vid().scaledstartheight() + 0 + 'px', right: 0, position: 'absolute', 'z-index': 1}">
-											  <a class="left carousel-control" href="#carousel-example-generic" role="button" data-slide="prev">
-												<span class="fui-arrow-left" aria-hidden="true"></span>
-												<span class="sr-only">Previous</span>
-											  </a>
-											  <a class="right carousel-control" href="#carousel-example-generic" role="button" data-slide="next">
-												<span class="fui-arrow-right" aria-hidden="true"></span>
-												<span class="sr-only">Next</span>
-											  </a>
+										<div data-bind="style: {width: vid().scaledstartwidth() +  'px', height: vid().scaledstartheight() + 'px', position: 'absolute', bottom: 0, right: 0}">
+											<img alt="preview image" data-bind="attr: {src: $root.thumbpath() + '/' + $root.vid().currentThumb()}, style: {width: $root.vid().scaledstartwidth() + 'px', height: $root.vid().scaledstartheight() + 'px'}">
 										</div>
-									</div> -->
-								</div>
+
+										<div class="cropzone" id="croppingt" data-bind="visible: vid().do_crop() && vid().cropt() > 0, style: {height: vid().cropt() + 'px', top:'0px', left: '100px', right: 0}"></div>
+										<div class="cropzone" id="croppingb" data-bind="visible: vid().do_crop() && vid().cropb() > 0, style: {height: vid().cropb() + 'px', height:vid().cropb()+ 'px', bottom: 0, left:'100px', right: 0}"></div>
+										<div class="cropzone" id="croppingl" data-bind="visible: vid().do_crop() && vid().cropl() > 0, style: {width: vid().cropl() * vid().par() + 'px', top:'0px', bottom: 0, left: '100px'}"></div>
+										<div class="cropzone" id="croppingr" data-bind="visible: vid().do_crop() && vid().cropr() > 0, style: {width: vid().cropr() * vid().par() + 'px', top:'0px', bottom: 0, right: 0}"></div>
+
+									</div>
+							</div>
+						</div>
+						<div class="thumbnails" data-bind="foreach: { data: vid().thumbnails, as: 'thumbnail' }">
+							<img class="thumbnail" data-bind="css: {active: $index() == $root.vid().currentThumbIdx()}, attr: {src: $root.thumbpath() + '/' + thumbnail}, click: function() { $root.vid().currentThumbIdx($index());}">
 						</div>
 					</div>
-					<div class="thumbnails" data-bind="foreach: { data: vid().thumbnails, as: 'thumbnail' }">
-						<img class="thumbnail" data-bind="css: {active: $index() == $root.vid().currentThumbIdx()}, attr: {src: $root.thumbpath() + '/' + thumbnail}, click: function() { $root.vid().currentThumbIdx($index());}">
-					</div>
 				</div>
 			</div>
-		</div>
-		<div class="container-fluid" data-bind="visible: step() === 2">
-			<div class="row" data-bind="if: vid()">
-				<div class="col-xs-12 tacenter">
-					
-				</div>
-			</div>
-		</div>
-		<div class="container" data-bind="visible: step() === 2">
-			<div class="row" data-bind="if: vid()">
-				<div class="col-xs-12">
-					<div class="form-group clearfix">
-						<button type="button" class="btn btn-inverse pull-left" data-bind="click: function() { step(1); }">Back</button>
-						<button type="button" class="btn btn-primary btn-lg pull-right" data-bind="disable: !vid().metadataReady(), click: function() { step(3); }">Continue</button>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="container" data-bind="visible: step() === 3">
-			<div class="row" data-bind="if: vid(), visible: !in_progress()">
-				<div class="col-xs-12">
-						<div class="Aligner">
-							<div class="Aligner-item" style="flex: 2;max-width: 100%;">
-							<div>
-							  <div class="panel-body">
-								<div class="form-group">
-									<label for="vidauthor">Vidder Name:</label>
-									<input id="vidauthor" class="form-control" type="text" data-bind="value: vid().author, valueUpdate: 'input', disable: vid().anonymous()"/>
-								</div>
-								<div class="row">
-									<div class="col-xs-12 col-md-11 col-md-offset-1">
-										<label class="checkbox" for="vid_anonymous">
-											<input id="vid_anonymous" class="custom-checkbox" type="checkbox" data-bind="checked: vid().anonymous"/>Anonymous (no name needed)
-											<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
-										</label>
-									</div>
-								</div>
-								<div class="form-group">
-									<label for="vidtitle">Vid Title:</label>
-									<input id="vidtitle" class="form-control" type="text" data-bind="value: vid().title, valueUpdate: 'input'"/>
-								</div>
-								<div class="row">
-									<legend>Vividcon Vidshow (optional)</legend>
-									<div class="col-xs-12 col-md-4">
-										<div class="form-group clearfix">
-											<label for="vyearselect">Year</label>
-											<select id="vyearselect" style="max-width: 120px" class="form-control select select-primary select-block mbl" data-bind="options: vidshowYears,
-															optionsCaption: 'Choose year...',
-															value: vidshowYear">
-
-											</select>
-										</div>
-									</div>
-									<div class="col-xs-12 col-md-8">
-										<div class="form-group clearfix">
-											<label for="vshowselect">Vidshow</label>
-											<select id="vshowselect" class="form-control select select-primary select-block mbl" data-bind="options: vidshowsByYear,
-															optionsCaption: 'Choose Vidshow...',
-															optionsText: 'text',
-															optionsValue: 'value',
-															value: vid().vidshow">
-
-											</select>
-										</div>
-									</div>
-								</div>
-								<div class="form-group">
-									
-								</div>
-							  </div>
-							</div>
-							</div>
-							<div class="Aligner-item">
-								<input class="sr-only" id="save" class="custom-file-input" type="file" nwsaveas="filename.mp4" data-bind="value: outPath"/>
-								<button class="btn btn-info center-block" id="saveSelect" data-bind="disable: !vid().convertable(), click: function() {document.querySelector('#save').click();}">Encode and save your vid!</button>
-							</div>
-
+			<div class="container" data-bind="visible: step() === 2">
+				<div class="row" data-bind="if: vid()">
+					<div class="col-xs-12">
+						<div class="form-group clearfix">
+							<button type="button" class="btn btn-inverse pull-left" data-bind="click: function() { step(1); }">Back</button>
+							<button type="button" class="btn btn-primary btn-lg pull-right" data-bind="click: function() { step(3); }">Continue</button>
 						</div>
+					</div>
+				</div>
+			</div>
+			<div class="container" data-bind="visible: step() === 3">
+				<div class="row" data-bind="if: vid(), visible: !in_progress()">
+					<div class="col-xs-12">
+							<div class="Aligner">
+								<div class="Aligner-item" style="flex: 2;max-width: 100%;">
+								<div>
+								  <div class="panel-body">
+									<div class="form-group">
+										<label for="vidauthor">Vidder Name:</label>
+										<input id="vidauthor" class="form-control" type="text" data-bind="textInput: vid().author, disable: vid().anonymous()"/>
+									</div>
+									<div class="row">
+										<div class="col-xs-12 col-md-11 col-md-offset-1">
+											<label class="checkbox" for="vid_anonymous">
+												<input id="vid_anonymous" class="custom-checkbox" type="checkbox" data-bind="checked: vid().anonymous"/>Anonymous (no name needed)
+												<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+											</label>
+										</div>
+									</div>
+									<div class="form-group">
+										<label for="vidtitle">Vid Title:</label>
+										<input id="vidtitle" class="form-control" type="text" data-bind="textInput: vid().title"/>
+									</div>
+									<div class="row">
+										<legend>Vividcon Vidshow (optional)</legend>
+										<div class="col-xs-12 col-md-4">
+											<div class="form-group clearfix">
+												<label for="vyearselect">Year</label>
+												<select id="vyearselect" style="max-width: 120px" class="form-control select select-primary select-block mbl" data-bind="options: vidshowYears,
+																optionsCaption: 'Choose year...',
+																value: vidshowYear">
+
+												</select>
+											</div>
+										</div>
+										<div class="col-xs-12 col-md-8">
+											<div class="form-group clearfix">
+												<label for="vshowselect">Vidshow</label>
+												<select id="vshowselect" class="form-control select select-primary select-block mbl" data-bind="options: vidshowsByYear,
+																optionsCaption: 'Choose Vidshow...',
+																optionsText: 'text',
+																optionsValue: 'value',
+																value: vidshowChoice">
+
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										
+									</div>
+								  </div>
+								</div>
+								</div>
+								<div class="Aligner-item">
+									<input class="sr-only" id="save" class="custom-file-input" type="file" accept=".m4v,video/mp4" data-bind="value: outPath, attr:{nwsaveas: suggestedFileName()}"/>
+									<button class="btn btn-info center-block" id="saveSelect" data-bind="disable: !vid().convertable(), click: function() {document.querySelector('#save').click();}">Encode and save your vid!</button>
+								</div>
+
+							</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="container" data-bind="if: step() > 5">
+				<div class="row" data-bind="if: vid(), visible: !in_progress()">
+					<div class="col-xs-12">
+						<div class="jumbotron">
+						  <h1>Congratulations!</h1>
+						  <p>Encoding appears to have been successful.</p>
+						  <p>
+						  	<button class="btn btn-info btn-lg" onclick="document.location.reload(true);">Encode another vid</button>
+						  	<button class="btn btn-info btn-lg" data-bind="click: opendir">Open vid location</button>
+						  	<button class="btn btn-primary btn-lg" data-bind="click: open">Open vid in default player</button>
+						  </p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div data-bind="if: vid(), visible: in_progress()" style="position: absolute; top:0; left: 0; right: 0; bottom: 0; -webkit-transform-style: preserve-3d; background: rgba(255,255,255,0.9)">
+			<div class="vMiddle">
+				<div class="container">
+					<div class="row">
+						<div class="col-xs-12 col-md-10 col-md-offset-1">
+							<h5 data-bind="text: outPath() ? 'Encoding ' + outPath() : 'Analysing ' + vid().path()"></h5>
+							<h6>ETA: <span data-bind="text: ETA()"></span></h6>
+							<div class="progress">
+								<div class="progress-bar" data-bind="style: {width: progress() + '%'}, css: {'progress-bar-striped' : progress() > 99.9}">
+
+								</div>
+							</div>
+							<button class="btn btn-danger" data-bind="click: function() { $root.ffcancel(); $root.clearVid();}">Cancel Scan</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div data-bind="if: errorMessage(), visible: errorMessage()" style="position: absolute; top:0; left: 0; right: 0; bottom: 0; -webkit-transform-style: preserve-3d; background: rgba(255,255,255,1)">
+			<div class="vMiddle">
+				<div class="container">
+					<div class="row">
+						<div class="col-xs-12 col-md-10 col-md-offset-1">
+							<h1>There seems to be a problem...</h1>
+							<code data-bind="text: errorMessage"></code>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-12 col-md-10 col-md-offset-1">
+							<button class="btn btn-info" onclick="document.location.reload(true);">Restart LlamaEnc</button>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
