@@ -9,8 +9,8 @@
     },
     "fluent-ffmpeg": {
       "version": "2.0.0-rc3",
-      "from": "fluent-ffmpeg@2.0.0-rc3",
-      "resolved": "https://registry.npmjs.org/fluent-ffmpeg/-/fluent-ffmpeg-2.0.0-rc3.tgz"
+      "from": "https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/tarball/master",
+      "resolved": "https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/tarball/master"
     },
     "humanize-duration": {
       "version": "2.3.0",
@@ -37,10 +37,20 @@
       "from": "git://github.com/nuky89/node-ffprobe",
       "resolved": "git://github.com/nuky89/node-ffprobe#7e03e21352bd45e076150e96de80f6e65d30fc54"
     },
+    "open": {
+      "version": "0.0.5",
+      "from": "open@",
+      "resolved": "https://registry.npmjs.org/open/-/open-0.0.5.tgz"
+    },
     "q": {
       "version": "1.1.2",
       "from": "https://registry.npmjs.org/q/-/q-1.1.2.tgz",
       "resolved": "https://registry.npmjs.org/q/-/q-1.1.2.tgz"
+    },
+    "sanitize-filename": {
+      "version": "1.1.1",
+      "from": "sanitize-filename@",
+      "resolved": "https://registry.npmjs.org/sanitize-filename/-/sanitize-filename-1.1.1.tgz"
     },
     "slice-file": {
       "version": "0.2.1",

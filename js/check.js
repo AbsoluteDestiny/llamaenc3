@@ -1,7 +1,6 @@
 var _ = require('lodash');
 var path = require('path');
 var fs = require('fs');
-var Glob = require("glob").Glob;
 var ffprobe = require('node-ffprobe');
 var sf = require('slice-file');
 var FfmpegCommand = require('fluent-ffmpeg');
