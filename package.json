@@ -1,6 +1,6 @@
 {
   "name": "LlamaEnc3",
-  "version": "3.0.0rc3",
+  "version": "3.0.0-rc3",
   "main": "./html/index.html",
   "description": "An ffmpeg wrapper for encoding videos for Vividcon and the Vidding community",
   "author": "Ian Roberts <ian@absolutedestiny.org>",
