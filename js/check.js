@@ -17,10 +17,12 @@ FfmpegCommand.getAvailableCodecs(function(err, codecs) {
 
 function Check() {
   var self = this;
-  ffprobe.FFPROBE_PATH = process.env['FFPROBE_PATH'];
-  console.log(process.env['FFMPEG_PATH']);
-  FfmpegCommand.setFfmpegPath(process.env['FFMPEG_PATH']);
-  FfmpegCommand.setFfprobePath(process.env['FFPROBE_PATH']);
+  if (process.platform !== "win32" || process.platform !== "darwin") {
+    ffprobe.FFPROBE_PATH = process.env['FFPROBE_PATH'];
+    console.log(process.env['FFMPEG_PATH']);
+    FfmpegCommand.setFfmpegPath(process.env['FFMPEG_PATH']);
+    FfmpegCommand.setFfprobePath(process.env['FFPROBE_PATH']);
+  }
 
   function probe(llama) {
     // Scan the vid file looking for video and audio

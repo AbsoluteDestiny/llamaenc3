@@ -50,6 +50,7 @@ function Encode() {
           ]);
       }
     command.addOptions('-preset medium')
+      .addOptions('-pix_fmt yuv420p')
       .addOptions('-profile:v high')
       .addOptions('-level 4.1')
       .addOptions(vid.width() > 1280 ? '-crf 22' : vid.width() > 640 ? '-crf 20' : '-crf 18')
@@ -89,6 +90,7 @@ function Encode() {
         llama.startTime(new Date());
       })
       .on('error', function(err, a, b) {
+        llama.errorMessage(err);
         console.log('an error happened: ' + err.message);
         console.log(a);
         console.log(b);
@@ -102,9 +104,14 @@ function Encode() {
         }
       })
       .on('end', function(err) {
-        llama.in_progress(false);
-        llama.steps()[4].done(true);
-        llama.step(100);
+        if (err) {
+          llama.errorMessage(err);
+          // console.log(err);
+        } else {
+          llama.in_progress(false);
+          llama.steps()[4].done(true);
+          llama.step(100);
+        }
       })
       .run();
   }
