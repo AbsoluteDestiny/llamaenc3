@@ -10,7 +10,7 @@ var Init = function() {
 			ext = ".exe";
 		}
 		
-		if (platform !== "win32" || platform !== "darwin") {
+		if (platform === "win32" || platform === "darwin") {
 			var basepath = path.join(__dirname, "..");
 			// console.log(path.join(basepath, "ffmpeg" + ext));
 			if (!fs.existsSync(path.join(basepath, "ffmpeg" + ext))) {
