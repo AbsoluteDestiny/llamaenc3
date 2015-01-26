@@ -1,4 +1,5 @@
 var fs = require('fs');
+var logger = require('../js/logging.js').logger;
 var path = require('path');
 
 var Init = function() {
@@ -12,11 +13,12 @@ var Init = function() {
 		
 		if (platform === "win32" || platform === "darwin") {
 			var basepath = path.join(__dirname, "..");
-			// console.log(path.join(basepath, "ffmpeg" + ext));
+			logger.log(path.join(basepath, "ffmpeg" + ext));
 			if (!fs.existsSync(path.join(basepath, "ffmpeg" + ext))) {
 				basepath = path.dirname(process.execPath);
-				// console.log(path.join(basepath, "ffmpeg" + ext));
+				logger.log(path.join(basepath, "ffmpeg" + ext));
 				if (!fs.existsSync(path.join(basepath, "ffmpeg" + ext))) {
+					logger.error("I can't find the ffmpeg binaries!");
 					throw "I can't find the ffmpeg binaries!";
 				}
 			}

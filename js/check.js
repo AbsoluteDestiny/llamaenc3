@@ -1,24 +1,27 @@
 var _ = require('lodash');
-var path = require('path');
-var fs = require('fs');
-var ffprobe = require('node-ffprobe');
-var sf = require('slice-file');
+var async = require('async');
 var FfmpegCommand = require('fluent-ffmpeg');
+var ffprobe = require('node-ffprobe');
+var fs = require('fs');
+
+var logger = require('../js/logging.js').logger;
+var path = require('path');
+var sf = require('slice-file');
 
 FfmpegCommand.getAvailableFormats(function(err, formats) {
-  console.log('Available formats:');
-  console.dir(formats);
+  logger.log('Available formats:');
+  logger.log(formats);
 });
 FfmpegCommand.getAvailableCodecs(function(err, codecs) {
-  console.log('Available codecs:');
-  console.dir(codecs);
+  logger.log('Available codecs:');
+  logger.log(codecs);
 });
 
 function Check() {
   var self = this;
   if (process.platform !== "win32" || process.platform !== "darwin") {
     ffprobe.FFPROBE_PATH = process.env['FFPROBE_PATH'];
-    console.log(process.env['FFMPEG_PATH']);
+    logger.log(process.env['FFMPEG_PATH']);
     FfmpegCommand.setFfmpegPath(process.env['FFMPEG_PATH']);
     FfmpegCommand.setFfprobePath(process.env['FFPROBE_PATH']);
   }
@@ -29,10 +32,13 @@ function Check() {
     llama.in_progress(true);
     var pr = new ffprobe(llama.vid().path(), function(err, probeData) {
       if (err) {
-        llama.errorMessage(err);
-        // console.log(err);
+        // llama.errorMessage(err);
+        logger.error(err);
       }
-      // console.log(probeData);
+      logger.log(probeData);
+      if (probeData.format && probeData.format.format_name) {
+        probeData.format.format_name = probeData.format.format_name.split(",").join(" ");
+      }
       llama.vid().data(probeData);
       llama.in_progress(true);
       // Do we have both a video and an audio stream?
@@ -54,19 +60,43 @@ function Check() {
           }
           var sar = stream.sample_aspect_ratio;
           if (sar) {
-            // console.log("sar");
-            // console.log(sar);
+            logger.log("sar");
+            logger.log(sar);
+            logger.log(llama.vid().startwidth());
             var numerator = parseInt(sar.split(":")[0], 10);
             var denominator = parseInt(sar.split(":")[1], 10);
+            if (llama.vid().startwidth() === 720 && (llama.vid().height() === 480 || llama.vid().height() === 576) ) {
+              // This is probably a standard def video and we should crop it to 704.
+              llama.vid().cropTo704(true);
+            }
+            // Ffmpeg has opinions on the SAR, lets see if they match ours...
             if (numerator) {
               llama.vid().sourceSar(numerator/denominator);
-              // console.log(numerator/denominator);
-              if (_.find(llama.vid().parOptions(), {value: numerator/denominator})) {
-                llama.vid().chosenPar(numerator/denominator);
+              logger.log(numerator/denominator);
+              var parmatch = null;
+              if (llama.vid().startwidth() === 720) {
+                parmatch = _.find(llama.vid().parOptions(), {ffmpeg: numerator/denominator});
+                if (parmatch) {
+                  llama.vid().chosenPar(parmatch.value);
+                }
               } else {
-                llama.vid().chosenPar(0);
+                // It's not a 720x vid but it still has a par, let's set it...
+                parmatch = _.find(llama.vid().parOptions(), {value: numerator/denominator});
+                if (parmatch) {
+                  llama.vid().chosenPar(parmatch.value);
+                } else {
+                  llama.vid().chosenPar(0);
+                }
+                llama.vid().customPar(numerator/denominator);
               }
-              llama.vid().customPar(numerator/denominator);
+            } else {
+              // FFmpeg doesnt know so make best guess based on vid dimensions, preferring 4:3
+              if (llama.vid().startwidth() === 720 && llama.vid().height() === 480) {
+                llama.vid().chosenPar(10/11);
+              }
+              if (llama.vid().startwidth() === 720 && llama.vid().height() === 576) {
+                llama.vid().chosenPar(12/11);
+              }
             }
           }
           llama.vid().videoOK(true);
@@ -80,55 +110,63 @@ function Check() {
       }
       if (hasVideo && !hasAudio) {
         missing.push("Audio");
-        console.log("need audio");
+        logger.log("need audio");
         return self.findAudio(llama);
-      }
-      if (!hasVideo && !hasAudio) {
+      } else if (!hasVideo && hasAudio) {
         var errMessage = llama.vidPath() + " has no " + missing.join(" or ") + " streams.";
-        llama.errorMessage(errMessage);
+        logger.warn(errMessage);
       }
     });
   }
   self.probe = probe;
 
   function findAudio(llama) {
-    // console.log("finding audio");
-    // var p = llama.vid().path();
-    // var searchpath = path.join(path.dirname(p), path.basename(p, path.extname(p)));
-    // searchpath = searchpath.split("\\").join("/") + "!(" + path.extname(p) + ")";
-    // console.log(searchpath);
-    var files = _.filter(fs.readdirSync(path.dirname(p)), function(fname) {
-      return _.contains(fname, path.basename(p, path.extname(p)));
-    });
-    if (!files.length) {
-      llama.errorMessage(llama.vid().path() + " has no audio.\n\nIf your audio is in a different file, make sure the filename matches the video and has a .wav, .aiff or .m4a extension.");
+    logger.log("finding audio");
+    var p = llama.vid().path();
+    logger.log(p);
+    var files = _.chain(fs.readdirSync(path.dirname(p)))
+      .filter(function(fname) {
+         return _.contains(fname, path.basename(p, path.extname(p)));
+       })
+      .map(function(file) { return path.join(path.dirname(p), file);})
+      .value();
+    logger.log(files);
+    if (!files || !files.length) {
+      logger.warn(llama.vid().path() + " has no audio.\n\nIf your audio is in a different file, make sure the filename matches the video but with a different extension.");
       return;
     }
-    // console.log("found files");
-    // console.dir(files);
-    _.forEach(files, function(file) {
-      file = path.join(path.dirname(p), file);
-      var pr = new ffprobe(file, function(err, probeData) {
-        if (err || llama.vid().audioPath()) {
-          console.log(err);
-          return;
+    logger.log("found files");
+    async.map(files, function(file, callback) {
+      ffprobe(file, function(err, result) {
+        callback(null, result);
+      });
+    },
+      function(err, results) {
+      for (var i = 0; i < results.length; i++) {
+        var result = results[i];
+        // logger.log(result);
+        if (!result) {
+          continue;
         }
-        for (var i = probeData.streams.length - 1; i >= 0; i--) {
-          var stream = probeData.streams[i];
+        for (var j = 0; j < result.streams.length; j++) {
+          var stream = result.streams[j];
+          console.log(stream);
           if (stream.codec_type === "video") {
             return;
           }
           if (stream.codec_type === "audio") {
-            // console.log(file);
-            // console.log(stream);
             if (!llama.vid().duration()) {
               llama.vid().data().format.duration = stream.duration;
             }
-            llama.vid().audioPath(file);
+            llama.vid().audioData(result);
+            llama.vid().audioPath(result.file);
             llama.vid().audioOK(true);
           }
         }
-      });
+      }
+      if (!llama.vid().audioOK()) {
+        logger.warn(llama.vid().path() + " has no audio.\n\nIf your audio is in a different file, make sure the filename matches the video but with a different extension.");
+      }
     });
   }
   self.findAudio = findAudio;
@@ -199,15 +237,14 @@ function Check() {
       })
       .on('error', function(err, a, b) {
         if (err) {
-          console.log('an error happened: ' + err.message);
-          console.log(a);
-          console.log(b);
-          llama.errorMessage(err);
-          // console.log(err);
+          // logger.log('an error happened: ' + err.message);
+          logger.log(a);
+          logger.log(b);
+          logger.error(err);
         }
       })
       .on('progress', function(progress) {
-        // console.log(progress);
+        // logger.log(progress);
         if (llama.vid().duration()) {
            var done = 100 * (convertHMS(progress.timemark) / llama.vid().duration());
            llama.currentTime(new Date());
@@ -216,21 +253,24 @@ function Check() {
       })
       .on('end', function(err) {
         if (err) {
-          llama.errorMessage(err);
-          // console.log(err);
+          logger.error(err);
         }
         var xs = sf(llama.logpath());
         xs.slice(-50)
           .on('data', function (line) {
             var data = line.toString();
-            // console.log(data);
+            logger.log(data);
             try {
               var crops = data.match(/crop=[\d]+:[\d]+:[\d]+:[\d]+/g).slice(-1)[0].split("=")[1].split(":").map(function(x) { return parseInt(x, 10); });
-              // console.log(crops);
-              llama.vid().cropt(crops[3]);
-              llama.vid().cropl(crops[2]);
-              llama.vid().cropr(llama.vid().startwidth() - (crops[0] + crops[2]));
-              llama.vid().cropb(llama.vid().startheight() - (crops[1] + crops[3]));
+              logger.log(crops);
+              llama.vid().suggestCropt(crops[3]);
+              llama.vid().cropt(llama.vid().suggestCropt());
+              llama.vid().suggestCropl(crops[2]);
+              llama.vid().cropl(llama.vid().suggestCropl());
+              llama.vid().suggestCropr(llama.vid().startwidth() - (crops[0] + crops[2]));
+              llama.vid().cropr(llama.vid().suggestCropr());
+              llama.vid().suggestCropb(llama.vid().startheight() - (crops[1] + crops[3]));
+              llama.vid().cropb(llama.vid().suggestCropb());
               llama.vid().do_crop(true);
             } catch(e) {  }
 
@@ -244,19 +284,19 @@ function Check() {
             try {
               var progressive = parseInt(data.match("Multi frame detection:[TBF0-9:\\s]*Progressive:[\\s]*([\\d]+)")[1], 10);
               llama.vid().progressive(progressive || 0);
-              // console.log(progressive);
+              logger.log(progressive);
             } catch(e) {  }
 
             try {
               var tff = parseInt(data.match("Multi frame detection:[\\s]*TFF:[\\s]*([\\d]+)")[1], 10);
               llama.vid().tff(tff || 0);
-              // console.log(tff);
+              logger.log(tff);
             } catch(e) {  }
 
             try {
               var bff = parseInt(data.match("Multi frame detection:[TF0-9:\\s]*BFF:[\\s]*([\\d]+)")[1], 10);
               llama.vid().bff(bff || 0);
-              // console.log(bff);
+              logger.log(bff);
             } catch(e) {  }
           })
           .on('end', function() {

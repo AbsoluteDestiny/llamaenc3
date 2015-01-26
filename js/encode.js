@@ -1,5 +1,6 @@
-var FfmpegCommand = require('fluent-ffmpeg');
 var check = require('../js/check.js');
+var FfmpegCommand = require('fluent-ffmpeg');
+var logger = require('../js/logging.js').logger;
 
 function Encode() {
   function make_mp4(llama) {
@@ -15,19 +16,19 @@ function Encode() {
     // crop
     if (vid.do_crop()) {
       var crop = vid.crop();
-      // console.log(crop);
+      // logger.log(crop);
       vfilters.push({
         filter: 'crop',
         options: crop
       });
     }
-    if (vid.sourceSar() != vid.par()) {
-      // set par
-      vfilters.push({
-        filter: 'setsar',
-        options: vid.par()
-      });
-    }
+    // if (vid.sourceSar() != vid.par()) {
+    //   // set par
+    //   vfilters.push({
+    //     filter: 'setsar',
+    //     options: vid.par()
+    //   });
+    // }
     // -ac 2 -strict experimental -ab 160k -s {ssize} -vcodec libx264 -preset slow -profile:v baseline -level 30 -maxrate 10000000 -bufsize 10000000 -b 1200k
     // --ref 4 --qpmin 4
     var command = new FfmpegCommand();
@@ -90,10 +91,9 @@ function Encode() {
         llama.startTime(new Date());
       })
       .on('error', function(err, a, b) {
-        llama.errorMessage(err);
-        console.log('an error happened: ' + err.message);
-        console.log(a);
-        console.log(b);
+        logger.error(err.message);
+        logger.log(a);
+        logger.log(b);
       })
       .on('progress', function(progress) {
         if (vid.duration()) {
@@ -105,8 +105,7 @@ function Encode() {
       })
       .on('end', function(err) {
         if (err) {
-          llama.errorMessage(err);
-          // console.log(err);
+          logger.error(err);
         } else {
           llama.in_progress(false);
           llama.steps()[4].done(true);

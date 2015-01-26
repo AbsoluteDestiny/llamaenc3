@@ -11,6 +11,23 @@
     "show": false,
     "position": "center"
   },
+  "platformOverrides": {
+    "win": {
+      "window": {
+        "toolbar": false
+      }
+    },
+    "osx": {
+      "window": {
+        "toolbar": false
+      }
+    },
+    "linux": {
+      "window": {
+        "toolbar": false
+      }
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/AbsoluteDestiny/LlamaEnc3"
@@ -20,6 +37,7 @@
   },
   "dependencies": {
     "async": "0.9.0",
+    "colors": "^1.0.3",
     "fluent-ffmpeg": "https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/tarball/master",
     "humanize-duration": "2.3.0",
     "jQuery": "1.7.4",
@@ -30,7 +48,8 @@
     "q": "1.1.2",
     "sanitize-filename": "^1.1.1",
     "slice-file": "0.2.1",
-    "tmp": "0.0.24"
+    "tmp": "0.0.24",
+    "tracer": "^0.7.3"
   },
   "preferGlobal": true,
   "private": true,

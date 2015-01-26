@@ -1,22 +1,26 @@
 var gui = require('nw.gui'); //or global.window.nwDispatcher.requireNwGui() (see https://github.com/rogerwang/node-webkit/issues/707)
 // Get the current window
 var win = gui.Window.get();
+var clipboard = gui.Clipboard.get();
 win.maximize();
 win.show();
 
 
-
-var init = require('../js/init.js');
-var exec = require('child_process').exec;
-var path = require('path');
-var file = require('../js/file.js');
+var LM;
+var _ = require('lodash');
 var check = require('../js/check.js');
 var encode = require('../js/encode.js');
-var _ = require('lodash');
+var exec = require('child_process').exec;
+var file = require('../js/file.js');
 var humanizeDuration = require("humanize-duration");
-var sanitize = require("sanitize-filename");
+var init = require('../js/init.js');
+var logger = require('../js/logging.js').logger;
 var open = require('open');
+var path = require('path');
+var sanitize = require("sanitize-filename");
 init.start();
+
+var goodInfoKeys = ["nb_streams", "nb_programs", "format_name", "start_time", "duration", "size", "bit_rate", "codec_name", "profile", "codec_type", "codec_time_base", "codec_tag_string", "width", "height", "has_b_frames", "sample_aspect_ratio", "display_aspect_ratio", "pix_fmt", "level", "color_range", "color_space", "color_transfer", "color_primaries", "chroma_location", "timecode", "is_avc", "r_frame_rate", "avg_frame_rate", "time_base", "start_pts", "duration_ts", "max_bit_rate", "bits_per_raw_sample", "nb_frames", "nb_read_frames", "nb_read_packets", "sample_fmt", "sample_rate", "channels", "channel_layout", "bits_per_sample"];
 
 var audioFile = function(llama, path) {
   var self = this;
@@ -55,6 +59,44 @@ var VidModel = function(llama, path) {
     }
   });
   self.data = ko.observable("");
+  self.audioData = ko.observable("");
+  self.containerInfo = ko.pureComputed(function() {
+    if (self.data()) {
+      return _.chain(self.data().format)
+              .pick(goodInfoKeys)
+              .pairs()
+              .value();
+    }
+  });
+  self.videoInfo = ko.pureComputed(function() {
+    if (self.data()) {
+      return _.chain(self.data().streams)
+              .find({codec_type: "video"})
+              .pick(goodInfoKeys)
+              .pairs()
+              .value();
+    }
+  });
+  self.audioInfo = ko.pureComputed(function() {
+    if (self.data()) {
+      var data = self.audioData() || self.data();
+      return _.chain(data.streams)
+              .find({codec_type: "audio"})
+              .pick(goodInfoKeys)
+              .pairs()
+              .value();
+    }
+  });
+  self.copyInfo = function() {
+    if (self.data()) {
+      var template = 'Container:\n\n<% _.forEach(format, function(item) { %><%- item[0] %>: <%- item[1] %>\n<% }); %>\n\n';
+      template = template + 'Video:\n\n<% _.forEach(video, function(item) { %><%- item[0] %>: <%- item[1] %>\n<% }); %>\n\n';
+      template = template + 'Audio:\n\n<% _.forEach(audio, function(item) { %><%- item[0] %>: <%- item[1] %>\n<% }); %>';
+      clipboard.set(_.template(template, {format: self.containerInfo(), video: self.videoInfo(), audio: self.audioInfo()}));
+    }
+  };
+
+
   self.nframes = null;
   self.duration = ko.pureComputed(function() {
     if (self.data() && self.data().format) {
@@ -85,7 +127,7 @@ var VidModel = function(llama, path) {
   self.sourceFPS = ko.observable(0);
 
   // Size and AR
-  // self.cropDetect = ko.observableArray();
+
   self.do_crop = ko.observable(false);
   self.startwidth = ko.observable("");
   self.sourceSar = ko.observable();
@@ -97,6 +139,22 @@ var VidModel = function(llama, path) {
     }
     return self.chosenPar() || 1.0;
   });
+  self.cropt = ko.observable(0);
+  self.cropb = ko.observable(0);
+  self.cropl = ko.observable(0);
+  self.cropr = ko.observable(0);
+  self.suggestCropt = ko.observable(0);
+  self.suggestCropb = ko.observable(0);
+  self.suggestCropl = ko.observable(0);
+  self.suggestCropr = ko.observable(0);
+  self.cropTo704 = ko.observable(false);
+  // If we are cropping to 704, crop is 8 or user crop if larger.
+  self.actualcropl = ko.computed(function() {
+    return Math.max(self.cropTo704() ? 8 : 0, self.do_crop() ? parseInt(self.cropl(), 10) : 0);
+  });
+  self.actualcropr = ko.computed(function() {
+    return Math.max(self.cropTo704() ? 8 : 0, self.do_crop() ? parseInt(self.cropr(), 10) : 0);
+  });
   self.scaledstartwidth = ko.computed(function() {
     return self.startwidth() * self.par();
   });
@@ -105,10 +163,7 @@ var VidModel = function(llama, path) {
     return self.startheight();
   });
   self.newWidth = ko.computed(function() {
-    if (self.do_crop()) {
-      return (self.startwidth() - (parseInt(self.cropl(), 10) + parseInt(self.cropr(), 10)));
-    }
-    return self.startwidth();
+    return (self.startwidth() - (self.actualcropl() + self.actualcropr()));
   });
   self.newHeight = ko.computed(function() {
     if (self.do_crop()) {
@@ -117,18 +172,12 @@ var VidModel = function(llama, path) {
     return self.startheight();
   });
   self.crop = ko.computed(function() {
-    // Final width:Final Height:X:Y
     if (self.do_crop()) {
-      var crop = self.newWidth() + ":" + self.newHeight() + ":" + self.cropl() + ":" + self.cropt();
-      // console.log(crop);
+      var crop = self.newWidth() + ":" + self.newHeight() + ":" + self.actualcropl() + ":" + self.cropt();
       return crop;
     }
     return "";
   });
-  self.cropt = ko.observable(0);
-  self.cropb = ko.observable(0);
-  self.cropl = ko.observable(0);
-  self.cropr = ko.observable(0);
   self.lufs = ko.observable(0);
   self.progressive = ko.observable(0);
   self.tff = ko.observable(0);
@@ -137,11 +186,11 @@ var VidModel = function(llama, path) {
   self.fo_choice = ko.observable("");
   
   self.parOptions = ko.observableArray([
-    {value: 1, text: "Square Pixels (1.0)"},
-    {value: 8/9, text: "4:3 NTSC DVD (0.9090)"},
-    {value: 32/27, text: "16:9 NTSC DVD (1.2101)"},
-    {value: 16/15, text: "4:3 PAL DVD (1.0925)"},
-    {value: 64/45, text: "16:9 PAL DVD (1.45679)"},
+    {value:1, ffmpeg: 1, text: "Square Pixels (1.0)"},
+    {value:10/11, ffmpeg: 8/9, text: "4:3 NTSC DVD (0.90)"},
+    {value:40/33, ffmpeg: 32/27, text: "16:9 NTSC DVD (1.21)"},
+    {value:12/11, ffmpeg: 16/15, text: "4:3 PAL DVD (1.09)"},
+    {value:16/11, ffmpeg: 64/45, text: "16:9 PAL DVD (1.45)"},
     // {value: 4/3, text: "16:9 HDV / HDCAM (1.333)"},
     {value: 0, text: "Custom PAR"}
   ]);
@@ -152,19 +201,19 @@ var VidModel = function(llama, path) {
     return 4 * Math.floor(self.newHeight()/4);
   });
   self.finalsize = ko.pureComputed(function() {
+    var scale = 1;
     if (self.width() > self.height()) {
       if (self.width() > 1920) {
-        return '1920x?';
-      } else {
-        return self.width() + 'x?';
+        scale = 1920 / self.width();
       }
     } else {
       if (self.height() > 1080) {
-        return '?x1080';
-      } else {
-        return '?x' + self.height();
+        scale = 1080 / self.height();
       }
     }
+    var scaleV = 4 * Math.floor(self.width() * scale/4);
+    var scaleH = 4 * Math.floor(self.height() * scale/4);
+    return scaleV + "x" + scaleH;
   });
 
   // Is everything ready for encoding?
@@ -208,6 +257,17 @@ var LLamaModel = function () {
   self.progress_title = ko.observable("");
   self.progres_description = ko.observable("");
   self.errorMessage = ko.observable("");
+  self.errorMessage.subscribe(function() {
+    self.in_progress(false);
+    win.showDevTools();
+    clipboard.set(self.errorMessage(), 'text');
+  });
+  self.warningMessage = ko.observable("");
+  self.warningMessage.subscribe(function() {
+    self.in_progress(false);
+    win.showDevTools();
+    // clipboard.set(self.warningMessage(), 'text');
+  });
   self.progress = ko.observable(0.0);
   // self.encodeProgress = ko.observable(0.0);
   self.startTime = ko.observable(0);
@@ -225,11 +285,6 @@ var LLamaModel = function () {
 
   // User Flow Progress
   self.step = ko.observable(0);
-  self.currentStep = ko.pureComputed(function() {
-    if (startwidth.steps().length < self.step())
-      return;
-    return self.steps()[self.step()];
-  });
   self.step.subscribe(function() {
     $(function() {
       $("select").select2({dropdownCssClass: 'dropdown-inverse'});
@@ -238,14 +293,22 @@ var LLamaModel = function () {
   });
   self.steps = ko.observableArray();
 
-  var step1 = new StepModel("Choose Vid");
-  var step2 = new StepModel("Field Options", function() {
+  var step1 = new StepModel("Source");
+  var step2 = new StepModel("Fields", function() {
     if (self.vidPath() && self.vid() && self.vid().fo_choice()) {
       step2.done(true);
     }
   });
-  var step3 = new StepModel("Cropping");
-  var step4 = new StepModel("Encode");
+  var step3 = new StepModel("Crop", function() {
+    if (self.vidPath() && self.vid() && self.step() > 1) {
+      step3.done(true);
+    }
+  });
+  var step4 = new StepModel("Encode", function() {
+    if (self.vidPath() && self.vid() && self.step() > 2) {
+      step4.done(true);
+    }
+  });
   var step5 = new StepModel("Done");
   step2.needs.push(step1);
   step3.needs.push(step1);
@@ -292,7 +355,6 @@ var LLamaModel = function () {
   self.outPath = ko.observable("");
   self.outPath.extend({ notify: 'always' });
   self.outPath.subscribe(function() {
-    // console.log("encoding");
     encode.make_mp4(self);
   });
   self.open = function() {
@@ -390,8 +452,8 @@ var LLamaModel = function () {
         else { missing.push("Audio"); }
     }
     if (hasVideo && hasAudio) {
-      // console.log(self.vid().width());
-      // console.log(self.vid().height());
+      // logger.log(self.vid().width());
+      // logger.log(self.vid().height());
       check.scan(self);
     } else {
       self.errorMessage(self.vidPath() + " has no " + missing.join(" or ") + " streams.");
@@ -401,29 +463,30 @@ var LLamaModel = function () {
   };
 
   exec('ffmpeg -version', function (error, stdout, stderr) {
-    // console.log("checking ffmpeg");
+    // logger.log("checking ffmpeg");
     if (!error) {
-      // console.log('stdout: ' + stdout);
+      logger.log('stdout: ' + stdout);
       self.ffmpeg(true);
     } else {
-      self.errorMessage("We can't find a copy of ffmpeg :(");
-      console.log('error: ' + error);
-      console.log('stderr: ' + stderr);
+      logger.error("We can't find a copy of ffmpeg :(");
+      logger.log('error: ' + error);
+      logger.log('stderr: ' + stderr);
     }
   });
 
   exec('ffprobe -version', function (error, stdout, stderr) {
-    // console.log("checking ffprobe");
+    // logger.log("checking ffprobe");
     if (!error) {
-      // console.log('stdout: ' + stdout);
+      logger.log('stdout: ' + stdout);
       self.ffprobe(true);
     } else {
-      self.errorMessage("We can't find a copy of ffprobe :(");
-      console.log('error: ' + error);
-      console.log('stderr: ' + stderr);
+      logger.error("We can't find a copy of ffprobe :(");
+      logger.log('error: ' + error);
+      logger.log('stderr: ' + stderr);
     }
   });
 };
 
-var LM = new LLamaModel();
+LM = new LLamaModel();
+global.LM = LM;
 ko.applyBindings(LM);

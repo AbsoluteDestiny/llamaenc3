@@ -7,7 +7,8 @@ var zip = require('gulp-zip');
 var archiver = require('archiver');
 var cp = require('glob-copy');
 var del = require('del');
-var version = require('./package.json').version;
+var packages = require('./package.json');
+var version = packages.version;
 console.log(version);
 
 var binMap = {
@@ -22,18 +23,24 @@ gulp.task('clean', function(cb) {
 });
 
 gulp.task('nw', ['clean'], function () {
-    var nw = new NwBuilder({
-    files: [
+    var files = [
             './**/**',
             '!./ff*.exe',
             '!./bin/**',
             '!./dist/**',
             '!./build/**',
+            '!./node_modules/**',
             '!./cache/**',
-            ],
-    platforms: ['osx32', 'osx64', 'win32', 'win64', 'linux64'],
-    macZip: true,
-    winIco: './llama.ico'
+            ];
+    // Don't copy over the dev-dependencies!
+    for (var key in packages.dependencies) {
+        files.push("node_modules/" + key + "/**");
+    }
+    var nw = new NwBuilder({
+        files: files,
+        platforms: ['osx32', 'osx64', 'win32', 'win64', 'linux64'],
+        macZip: true,
+        winIco: './llama.ico'
     });
 
     // Build returns a promise
@@ -53,7 +60,7 @@ gulp.task("copyBin", ['nw'],function() {
     var osx32 = gulpFilter('**/osx32/**');
     var osx64 = gulpFilter('**/osx64/**');
     var win64 = gulpFilter('**/win64/**');
-    return gulp.src("bin/**/**")
+    return gulp.src(["bin/**/**"])
         .pipe(win32)
         .pipe(flatten())
         .pipe(gulp.dest(binMap['win32']))
@@ -70,6 +77,20 @@ gulp.task("copyBin", ['nw'],function() {
         .pipe(flatten())
         .pipe(gulp.dest(binMap['win64']));
 });
+
+// gulp.task("copyNM", ['nw'],function() {
+//     var win32 = gulpFilter('**/win32/**');
+//     var osx32 = gulpFilter('**/osx32/**');
+//     var osx64 = gulpFilter('**/osx64/**');
+//     var win64 = gulpFilter('**/win64/**');
+    
+//     console.log(sources);
+//     return gulp.src(sources, { "base" : "." })
+//         .pipe(gulp.dest(binMap['win32']))
+//         .pipe(gulp.dest(binMap['osx32']))
+//         .pipe(gulp.dest(binMap['osx64']))
+//         .pipe(gulp.dest(binMap['win64']));
+// });
 
 
 gulp.task('zip', ['copyBin'], function() {
