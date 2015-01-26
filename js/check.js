@@ -152,7 +152,7 @@ function Check() {
           var stream = result.streams[j];
           console.log(stream);
           if (stream.codec_type === "video") {
-            return;
+            continue;
           }
           if (stream.codec_type === "audio") {
             if (!llama.vid().duration()) {
