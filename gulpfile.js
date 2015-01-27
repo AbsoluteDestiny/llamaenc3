@@ -38,7 +38,7 @@ gulp.task('nw', ['clean'], function () {
     }
     var nw = new NwBuilder({
         files: files,
-        platforms: ['osx32', 'osx64', 'win32', 'win64', 'linux64'],
+        platforms: ['osx32', 'osx64', 'win32', 'win64', 'linux64', 'linux32'],
         macZip: true,
         winIco: './llama.ico'
     });
@@ -99,6 +99,7 @@ gulp.task('zip', ['copyBin'], function() {
     var osx64 = gulpFilter('**/win32/**');
     var win64 = gulpFilter('**/win64/**');
     var linux64 = gulpFilter('**/linux64/**');
+    var linux32 = gulpFilter('**/linux32/**');
     return gulp.src('build/LlamaEnc3/**')
         .pipe(win32)
         .pipe(zip('LlamaEnc3-' + version + '-osx-32bit.zip'))
@@ -116,6 +117,10 @@ gulp.task('zip', ['copyBin'], function() {
         .pipe(zip('LlamaEnc3-' + version + '-win-64bit.zip'))
         .pipe(gulp.dest('dist'))
         .pipe(win64.restore())
+        .pipe(linux32)
+        .pipe(zip('LlamaEnc3-' + version + '-linux-32bit.zip'))
+        .pipe(gulp.dest('dist'))
+        .pipe(linux32.restore())
         .pipe(linux64)
         .pipe(zip('LlamaEnc3-' + version + '-linux-64bit.zip'))
         .pipe(gulp.dest('dist'));
