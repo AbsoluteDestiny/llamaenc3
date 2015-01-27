@@ -26,6 +26,7 @@ gulp.task('nw', ['clean'], function () {
     var files = [
             './**/**',
             '!./ff*.exe',
+            '!./*.log',
             '!./bin/**',
             '!./dist/**',
             '!./build/**',
@@ -40,6 +41,7 @@ gulp.task('nw', ['clean'], function () {
         files: files,
         platforms: ['osx32', 'osx64', 'win32', 'win64', 'linux64', 'linux32'],
         macZip: true,
+        macIcns: './llama.icns',
         winIco: './llama.ico'
     });
 
