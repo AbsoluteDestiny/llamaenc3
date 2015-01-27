@@ -31,13 +31,6 @@ function Filter() {
             {
                 error : "<{{title}}> (in {{file}}:{{line}})\n{{message}}\nCall Stack:\n{{stack}}" // error format
             }
-    ],
-    filters: [
-             colors.underline, colors.blue,
-             {
-               warn : [self.filter, colors.yellow],
-               error : [self.filter, colors.red, colors.bold ]
-             }
     ]
   });
 }
