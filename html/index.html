@@ -214,7 +214,7 @@
 								</div>
 								<div class="cropMainMain flexV">
 									<div class="cropMainTop">
-										<div class="rangeTop flexH" data-bind="if: vid().do_crop()">
+										<div class="rangeTop flexH" data-bind="if: vid().do_crop(), style: {'min-width': $root.vid().scaledstartwidth() + 'px'}">
 											<!-- <div class="rangeRow" data-bind="style: {width: (vid().scaledstartwidth() / 2) + 'px', float: 'left'}"> -->
 											<div class="rangeRow flexG">
 												<div class="form-group tacenter">
@@ -235,7 +235,7 @@
 									</div>
 									<div class="cropMainVid">
 										<!-- <div class="previewContainer" data-bind="style: {width: vid().scaledstartwidth() + 100 + 'px', height: vid().scaledstartheight() +  'px', 'margin-bottom': '42px'}"> -->
-										<div class="previewContainer" style="position: relative">
+										<div class="previewContainer" style="position: relative" data-bind="style: {'min-width': $root.vid().scaledstartwidth() + 'px'}">
 											<!-- <div data-bind="style: {width: vid().scaledstartwidth() +  'px', height: vid().scaledstartheight() + 'px', position: 'absolute', bottom: 0, right: 0}"> -->
 											<div>
 												<img alt="preview image" data-bind="attr: {src: $root.thumbpath() + '/' + $root.vid().currentThumb()}, style: {width: $root.vid().scaledstartwidth() + 'px', height: $root.vid().scaledstartheight() + 'px'}">
