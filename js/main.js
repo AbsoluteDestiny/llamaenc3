@@ -264,6 +264,7 @@ var StepModel = function(title, done_test) {
 
 var LLamaModel = function () {
   var self = this;
+  self.version = packagejson.version;
   self.ffmpeg = ko.observable(false);
   self.ffprobe = ko.observable(false);
   self.vid = ko.observable("");

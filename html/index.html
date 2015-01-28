@@ -44,6 +44,9 @@
 						</div>
 						<!-- Collect the nav links, forms, and other content for toggling -->
 						<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+						  <div class="navbar-brand" style="margin-left: 0; padding-left: 0;">
+						  	<span style="font-size: 60%" data-bind="text: 'version ' + version"></span>
+						  </div>
 						  <form class="navbar-form navbar-right" role="search">
 						  	<span data-bind="if: vid()"><span data-bind="text: vid().finalsize()"></span> <span data-bind="text: vid().sourceFPS() > 30 ? 29.97 : LM.vid().sourceFPS().toString().slice(0, 6)"></span>fps</span>
 							<button type="button" class="btn btn-info" data-toggle="modal" data-target="#infoModal" data-bind="if: vid(), visible: vid()">
