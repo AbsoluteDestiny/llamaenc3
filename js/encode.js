@@ -99,7 +99,7 @@ function Encode() {
       }
       pass1
       // .addOptions("-metadata", "album='"  + vid.vidshow() || "Vidding")
-      .addOptions("-metadata", "grouping=LlamaEnc3.0")
+      .addOptions("-metadata", "grouping=LlamaEnc3.0_api1_" + vid.silence_start() + "_" + vid.silence_end())
       // event callbacks
       .on('error', function(err, a, b) {
         logger.error(err.message);
@@ -118,7 +118,6 @@ function Encode() {
            var done = 30 + (70 * (check.convertHMS(progress.timemark) / vid.duration()));
            llama.currentTime(new Date());
            llama.progress(done);
-           // $("#progress").css('width', done + "%"); 
         }
       })
       .on('end', function(err) {

@@ -1,4 +1,3 @@
-var colors = require('colors');
 var logger = require('tracer');
 
 function Filter() {

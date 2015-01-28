@@ -4,20 +4,34 @@ var win = gui.Window.get();
 var clipboard = gui.Clipboard.get();
 win.maximize();
 win.show();
-
+var exit_cleanup = function() {
+  // show warning if you want
+  if (global.LM) {
+    LM.thumbpath_clean();
+    LM.logpath_clean();
+  }
+  this.close(true);
+};
+win.on('close', exit_cleanup);
 
 var LM;
 var _ = require('lodash');
 var check = require('../js/check.js');
 var encode = require('../js/encode.js');
 var exec = require('child_process').exec;
+var https = require('https');
+var fs = require('fs');
+var del = require('del');
 var file = require('../js/file.js');
 var humanizeDuration = require("humanize-duration");
 var init = require('../js/init.js');
 var logger = require('../js/logging.js').logger;
 var open = require('open');
 var path = require('path');
+var semver = require('semver');
 var sanitize = require("sanitize-filename");
+var GitHubApi = require("github");
+var packagejson = require("../package.json");
 init.start();
 
 var goodInfoKeys = ["nb_streams", "nb_programs", "format_name", "start_time", "duration", "size", "bit_rate", "codec_name", "profile", "codec_type", "codec_time_base", "codec_tag_string", "width", "height", "has_b_frames", "sample_aspect_ratio", "display_aspect_ratio", "pix_fmt", "level", "color_range", "color_space", "color_transfer", "color_primaries", "chroma_location", "timecode", "is_avc", "r_frame_rate", "avg_frame_rate", "time_base", "start_pts", "duration_ts", "max_bit_rate", "bits_per_raw_sample", "nb_frames", "nb_read_frames", "nb_read_packets", "sample_fmt", "sample_rate", "channels", "channel_layout", "bits_per_sample"];
@@ -125,6 +139,8 @@ var VidModel = function(llama, path) {
     return self.vidder() && self.title();
   });
   self.sourceFPS = ko.observable(0);
+  self.silence_start = ko.observable(0); // The amount of silence at the start of the vid.
+  self.silence_end = ko.observable(0); // The amount of silence at the end of the vid.
 
   // Size and AR
 
@@ -253,6 +269,18 @@ var LLamaModel = function () {
   self.vid = ko.observable("");
   self.vidPath = ko.observable("");
   //Status stuff
+  self.updateAvailable = ko.observable("");
+  self.githubAsset = ko.computed(function() {
+    var platform = process.platform;
+    var arch = process.arch;
+    var base = platform === "win32" ? "win" : platform === "darwin" ? "osx" : "linux";
+    var bit = arch === "x64" ? '64bit' : '32bit';
+    console.log(base + "-" + bit);
+    return _.find(self.updateAvailable().assets,
+      function(item) {
+         return _.contains(item.name, base + "-" + bit);
+      });
+  });
   self.in_progress = ko.observable(false);
   self.progress_title = ko.observable("");
   self.progres_description = ko.observable("");
@@ -321,9 +349,17 @@ var LLamaModel = function () {
 
   // Temporary file management
   self.logpath = ko.observable("");
-  self.logpath_clean = function() { };
+  self.logpath_clean = function() {
+    if (self.logpath()) {
+      del.sync(self.logpath(), {force: true});
+    }
+  };
   self.thumbpath = ko.observable("");
-  self.thumbpath_clean = function() { };
+  self.thumbpath_clean = function() {
+    if (self.thumbpath()) {
+      del.sync(self.thumbpath(), {force: true});
+    }
+  };
   
   // Vid info
   self.vid.subscribe(function() {
@@ -485,6 +521,25 @@ var LLamaModel = function () {
       logger.log('stderr: ' + stderr);
     }
   });
+
+  self.findUpdate = function() {
+    var github = new GitHubApi({
+      version: "3.0.0",
+    });
+    github.releases.listReleases({
+        owner: "AbsoluteDestiny",
+        repo: "llamaenc3"
+    }, function(err, res) {
+        if (!err) {
+          var latest = res[0];
+          if (semver.gt(latest.tag_name, packagejson.version)) {
+            self.updateAvailable(latest);
+            $("#updateModal").modal();
+          }
+        }
+    });
+  };
+  self.findUpdate();
 };
 
 LM = new LLamaModel();

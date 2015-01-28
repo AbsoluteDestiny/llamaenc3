@@ -18,6 +18,7 @@
 		<!-- Include all compiled plugins (below), or include individual files as needed -->
 		<script type='text/javascript' src="js/vendor/video.js"></script>
 		<script type='text/javascript' src="js/flat-ui.min.js"></script>
+		<script type='text/javascript' src="js/markdown.min.js"></script>
 		<!-- HTML5 shim, for IE6-8 support of HTML5 elements. All other JS at the end of file. -->
 		<!--[if lt IE 9]>
 			<script src="js/vendor/html5shiv.js"></script>
@@ -48,7 +49,7 @@
 							<button type="button" class="btn btn-info" data-toggle="modal" data-target="#infoModal" data-bind="if: vid(), visible: vid()">
 								<span class="fui-document" aria-hidden="true"></span> Source Info
 							</button>
-							<button type="button" class="btn btn-danger" onclick="document.location.reload(true);">
+							<button type="button" class="btn btn-danger" onclick="LM.clearVid(); document.location.reload(true);">
 								<span class="fui-power" aria-hidden="true"></span> Start over
 							</button>
 						  </form>
@@ -358,7 +359,7 @@
 							  <p>Encoding appears to have been successful.</p>
 							  <div class="row">
 								<div class="col-xs-12 col-md-4">
-									<button class="btn btn-danger btn-lg" onclick="document.location.reload(true);">Encode another vid</button>
+									<button class="btn btn-danger btn-lg" onclick="LM.clearVid(); document.location.reload(true);">Encode another vid</button>
 								</div>
 								<div class="col-xs-12 col-md-4">
 									<button class="btn btn-info btn-lg" data-bind="click: opendir">Open vid location</button>
@@ -378,7 +379,7 @@
 				<div class="container">
 					<div class="row">
 						<div class="col-xs-12 col-md-10 col-md-offset-1">
-							<h5 style="overflow: hidden; text-overflow:ellipsis" data-bind="text: outPath() ? 'Encoding ' + outPath() : 'Analysing ' + vid().path()"></h5>
+							<h5 style="overflow: hidden; text-overflow:ellipsis; padding: 0.5em 0;" data-bind="text: outPath() ? 'Encoding ' + outPath() : 'Analysing ' + vid().path()"></h5>
 							<h6>ETA: <span data-bind="text: ETA()"></span></h6>
 							<div class="progress">
 								<div class="progress-bar active progress-bar-striped" data-bind="style: {width: progress() + '%'}, css: {'progress-bar-striped' : progress() > 99.9}">
@@ -409,7 +410,7 @@
 					</div>
 					<div class="row">
 						<div class="col-xs-12 col-md-10 col-md-offset-1">
-							<button type="button" class="btn btn-danger" onclick="document.location.reload(true);">
+							<button type="button" class="btn btn-danger" onclick="LM.clearVid(); document.location.reload(true);">
 								<span class="fui-power" aria-hidden="true"></span> Restart LlamaEnc
 							</button>
 						</div>
@@ -431,7 +432,7 @@
 					</div>
 					<div class="row">
 						<div class="col-xs-12 col-md-10 col-md-offset-1">
-							<button type="button" class="btn btn-danger" onclick="document.location.reload(true);">
+							<button type="button" class="btn btn-danger" onclick="LM.clearVid(); document.location.reload(true);">
 								<span class="fui-power" aria-hidden="true"></span> Restart LlamaEnc
 							</button>
 						</div>
@@ -439,6 +440,7 @@
 				</div>
 			</div>
 		</div>
+
 		<div data-bind="if: vid()" class="modal fade" id="infoModal" tabindex="-1" role="dialog" aria-labelledby="infoModalLabel" aria-hidden="true">
 		  <div class="modal-dialog" style="width: calc(100% - 1em)">
 		    <div class="modal-content">
@@ -473,6 +475,24 @@
 		      </div>
 		      <div class="modal-footer">
 		        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+		<!-- Modal -->
+		<div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+		  <div class="modal-dialog" data-bind="if: updateAvailable()">
+		    <div class="modal-content">
+		      <div class="modal-header">
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		        <h4 class="modal-title">A new version of LlamaEnc is available!</h4>
+		      </div>
+		      <div class="modal-body">
+		        <section data-bind="html: markdown.toHTML( updateAvailable().body.split('# ').join('#### ') )"></section>
+		      </div>
+		      <div class="modal-footer">
+		        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		        <a role="button" data-bind="attr: {href: githubAsset().browser_download_url}, text: 'Download ' + githubAsset().name" class="btn btn-primary"></a>
 		      </div>
 		    </div>
 		  </div>
