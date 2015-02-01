@@ -259,7 +259,7 @@ function Check() {
       command.on('start', function() {
         // $("#open").hide();
         llama.startTime(new Date());
-        
+
         log.matches(/crop=([\d]+):([\d]+):([\d]+):([\d]+)/, function(m, vars){
           vars.crop = [
             parseInt(m[1], 10),
@@ -294,7 +294,7 @@ function Check() {
           }
         })
         .on('end', function(vars){
-            console.log(vars.count + ' matches found.');
+            // console.log(vars.count + ' matches found.');
         })
         .matches(/Multi frame detection:[\s]*[TF:]+[\s]*([\d]+)[\D]+([\d]+)[\D]+([\d]+)/, function(m, vars){
           // console.log(m);

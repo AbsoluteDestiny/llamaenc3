@@ -22,7 +22,7 @@ gulp.task('clean', function(cb) {
   del(['build', 'dist'], cb);
 });
 
-gulp.task('nw', ['clean'], function () {
+gulp.task('nw', ['clean'], function (cb) {
     var files = [
             './**/**',
             '!./ff*.exe',

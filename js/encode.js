@@ -5,6 +5,11 @@ var logger = require('../js/logging.js').logger;
 function Encode() {
   function make_mp4(llama) {
     var vid = llama.vid();
+
+    // Update the database of vidders
+    llama.saveVidder();
+
+
     var vfilters = [];
     var NUL = "/dev/null";
     if (process.platform === "win32") {
@@ -54,7 +59,11 @@ function Encode() {
           ]);
       }
     // var bitrate = Math.ceil((2.3438 * vid.width()) + 1500);
-    var bitrate = Math.ceil(30.489 * Math.pow(vid.width() * vid.height(), 0.3633));
+    // y = 1832.2ln(x) - 20154
+    // var bitrate = Math.ceil(1832.2 * Math.log(vid.width() * vid.height()) - 20154);
+    //y = 66.551x0.3147
+    var bitrate = Math.ceil(66.551 * Math.pow(vid.width() * vid.height(), 0.3147));
+    // var bitrate = Math.ceil(30.489 * Math.pow(vid.width() * vid.height(), 0.3633));
     var bufsize = 2 * bitrate;
     var maxrate = Math.max(10000, bitrate);
     // console.log(bitrate);

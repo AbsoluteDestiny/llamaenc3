@@ -33,6 +33,12 @@ var sanitize = require("sanitize-filename");
 var GitHubApi = require("github");
 var packagejson = require("../package.json");
 init.start();
+var Datastore = require('nedb');
+var vidders = new Datastore({
+  filename: path.join(require('nw.gui').App.dataPath, 'vidders.db'),
+  autoload: true
+});
+
 
 var goodInfoKeys = ["nb_streams", "nb_programs", "format_name", "start_time", "duration", "size", "bit_rate", "codec_name", "profile", "codec_type", "codec_time_base", "codec_tag_string", "width", "height", "has_b_frames", "sample_aspect_ratio", "display_aspect_ratio", "pix_fmt", "level", "color_range", "color_space", "color_transfer", "color_primaries", "chroma_location", "timecode", "is_avc", "r_frame_rate", "avg_frame_rate", "time_base", "start_pts", "duration_ts", "max_bit_rate", "bits_per_raw_sample", "nb_frames", "nb_read_frames", "nb_read_packets", "sample_fmt", "sample_rate", "channels", "channel_layout", "bits_per_sample"];
 
@@ -276,7 +282,7 @@ var LLamaModel = function () {
     var arch = process.arch;
     var base = platform === "win32" ? "win" : platform === "darwin" ? "osx" : "linux";
     var bit = arch === "x64" ? '64bit' : '32bit';
-    console.log(base + "-" + bit);
+    // console.log(base + "-" + bit);
     return _.find(self.updateAvailable().assets,
       function(item) {
          return _.contains(item.name, base + "-" + bit);
@@ -382,7 +388,6 @@ var LLamaModel = function () {
       self.clearVid();
       self.vid(new VidModel(self, self.vidPath()));
       file.setupTempFiles(self);
-      check.probe(self);
     }
   });
   self.vidPicked = function() {
@@ -412,6 +417,7 @@ var LLamaModel = function () {
     }
   });
 
+  self.vidders = ko.observableArray();
   self.vvcShows = ko.observableArray();
   self.vidshowYear = ko.observable();
   self.vidshowYears = ko.pureComputed(function() {
@@ -541,6 +547,24 @@ var LLamaModel = function () {
     });
   };
   self.findUpdate();
+
+  self.saveVidder = function() {
+    if (!self.vid().anonymous()) {
+      vidders.update({ name: self.vid().author() }, { $inc: { count: 1 } }, { upsert: true }, function () {
+        self.syncVidders();
+      });
+    }
+  };
+
+  self.syncVidders = function() {
+    vidders.find({count: { $gt: 0 }}).sort({ name: 1 }).exec(function(err, data) {
+      if (data) {
+        // console.log(data);
+        self.vidders(data);
+      }
+    });
+  };
+  self.syncVidders();
 };
 
 LM = new LLamaModel();
