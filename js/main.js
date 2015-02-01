@@ -2,37 +2,34 @@ var gui = require('nw.gui'); //or global.window.nwDispatcher.requireNwGui() (see
 // Get the current window
 var win = gui.Window.get();
 var clipboard = gui.Clipboard.get();
-win.maximize();
-win.show();
-var exit_cleanup = function() {
-  // show warning if you want
-  if (global.LM) {
-    LM.thumbpath_clean();
-    LM.logpath_clean();
-  }
-  this.close(true);
-};
-win.on('close', exit_cleanup);
+$(function() {
+  win.maximize();
+  win.show();
+});
+var init = require('../js/init.js');
+init.start();
 
 var LM;
 var _ = require('lodash');
-var check = require('../js/check.js');
-var encode = require('../js/encode.js');
-var exec = require('child_process').exec;
-var https = require('https');
-var fs = require('fs');
 var del = require('del');
-var file = require('../js/file.js');
+var exec = require('child_process').exec;
+var fs = require('fs');
+var GitHubApi = require("github");
+var https = require('https');
 var humanizeDuration = require("humanize-duration");
 var init = require('../js/init.js');
-var logger = require('../js/logging.js').logger;
 var open = require('open');
 var path = require('path');
-var semver = require('semver');
 var sanitize = require("sanitize-filename");
-var GitHubApi = require("github");
+var semver = require('semver');
+var temp = require('temp');
+
+var check = require('../js/check.js');
+var encode = require('../js/encode.js');
+var file = require('../js/file.js');
+var logger = require('../js/logging.js').logger;
 var packagejson = require("../package.json");
-init.start();
+
 var Datastore = require('nedb');
 var vidders = new Datastore({
   filename: path.join(require('nw.gui').App.dataPath, 'vidders.db'),
@@ -356,17 +353,7 @@ var LLamaModel = function () {
 
   // Temporary file management
   self.logpath = ko.observable("");
-  self.logpath_clean = function() {
-    if (self.logpath()) {
-      del.sync(self.logpath(), {force: true});
-    }
-  };
   self.thumbpath = ko.observable("");
-  self.thumbpath_clean = function() {
-    if (self.thumbpath()) {
-      del.sync(self.thumbpath(), {force: true});
-    }
-  };
   
   // Vid info
   self.vid.subscribe(function() {
@@ -378,16 +365,16 @@ var LLamaModel = function () {
   self.clearVid = function() {
     self.step(0);
     self.progress(0);
-    self.logpath_clean();
-    self.thumbpath_clean();
     self.vid(null);
     $('#open').val('');
+    temp.cleanupSync();
   };
   self.vidPath.subscribe(function() {
     if (self.vidPath()) {
       self.clearVid();
       self.vid(new VidModel(self, self.vidPath()));
       file.setupTempFiles(self);
+      check.probe(self);
     }
   });
   self.vidPicked = function() {

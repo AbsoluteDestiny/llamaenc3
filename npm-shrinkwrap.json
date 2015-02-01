@@ -1,6 +1,6 @@
 {
   "name": "LlamaEnc3",
-  "version": "3.0.0-rc8",
+  "version": "3.0.0-rc9",
   "dependencies": {
     "async": {
       "version": "0.9.0",
@@ -284,30 +284,15 @@
         }
       }
     },
-    "tmp": {
-      "version": "0.0.24",
-      "from": "https://registry.npmjs.org/tmp/-/tmp-0.0.24.tgz",
-      "resolved": "https://registry.npmjs.org/tmp/-/tmp-0.0.24.tgz"
-    },
-    "tracer": {
-      "version": "0.7.3",
-      "from": "tracer@",
-      "resolved": "https://registry.npmjs.org/tracer/-/tracer-0.7.3.tgz",
+    "temp": {
+      "version": "0.8.1",
+      "from": "temp@",
+      "resolved": "https://registry.npmjs.org/temp/-/temp-0.8.1.tgz",
       "dependencies": {
-        "dateformat": {
-          "version": "1.0.2-1.2.3",
-          "from": "dateformat@1.0.2-1.2.3",
-          "resolved": "https://registry.npmjs.org/dateformat/-/dateformat-1.0.2-1.2.3.tgz"
-        },
-        "colors": {
-          "version": "0.6.2",
-          "from": "colors@~0.6.2",
-          "resolved": "https://registry.npmjs.org/colors/-/colors-0.6.2.tgz"
-        },
-        "tinytim": {
-          "version": "0.1.1",
-          "from": "tinytim@>=0.1.0",
-          "resolved": "https://registry.npmjs.org/tinytim/-/tinytim-0.1.1.tgz"
+        "rimraf": {
+          "version": "2.2.8",
+          "from": "rimraf@~2.2.6",
+          "resolved": "https://registry.npmjs.org/rimraf/-/rimraf-2.2.8.tgz"
         }
       }
     }
