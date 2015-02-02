@@ -9,6 +9,7 @@
     "toolbar": true,
     "frame": true,
     "show": false,
+    "icon": "llama.png",
     "position": "center"
   },
   "platformOverrides": {
