@@ -22,7 +22,7 @@ gulp.task('clean', function(cb) {
   del(['build', 'dist'], cb);
 });
 
-gulp.task('nw', ['clean'], function (cb) {
+gulp.task('nw', ['clean'], function () {
     var files = [
             './**/**',
             '!./ff*.exe',
@@ -35,15 +35,22 @@ gulp.task('nw', ['clean'], function (cb) {
             ];
     // Don't copy over the dev-dependencies!
     for (var key in packages.dependencies) {
-        files.push("node_modules/" + key + "/**");
+        files.push("./node_modules/" + key + "/*.js");
+        files.push("./node_modules/" + key + "/*.json");
+        files.push("./node_modules/" + key + "/**/*.js");
+        files.push("./node_modules/" + key + "/**/*.json");
     }
+    files = files.concat(['!./node_modules/**/+(test|tests|example|examples)/**']);
+    console.log(files);
     var nw = new NwBuilder({
         files: files,
         platforms: ['osx32', 'osx64', 'win32', 'win64', 'linux64', 'linux32'],
-        macZip: true,
+        macZip: false,
         macIcns: './llama.icns',
         winIco: './llama.ico'
     });
+
+    nw.on('log',  console.log);
 
     // Build returns a promise
     return nw.build().then(function (a) {
@@ -53,7 +60,6 @@ gulp.task('nw', ['clean'], function (cb) {
         console.log("nw build done");
     }).catch(function (error) {
         console.error(error);
-        cb(error);
     });
 });
 

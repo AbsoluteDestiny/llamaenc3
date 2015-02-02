@@ -2,9 +2,20 @@ var gui = require('nw.gui'); //or global.window.nwDispatcher.requireNwGui() (see
 // Get the current window
 var win = gui.Window.get();
 var clipboard = gui.Clipboard.get();
+
 $(function() {
   win.maximize();
   win.show();
+  // Register dev console to ctrl+d
+  $("body").on('keypress', function(e) {
+    if (e.which === 4 && e.ctrlKey === true) {
+      if (win.isDevToolsOpen()) {
+        win.closeDevTools();
+      } else {
+        win.showDevTools();
+      }
+    }
+  });
 });
 var init = require('../js/init.js');
 init.start();
