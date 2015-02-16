@@ -12,8 +12,8 @@ var version = packages.version;
 console.log(version);
 
 var binMap = {
-    'osx32' : 'build/LlamaEnc3/osx32/LlamaEnc3.app/Contents/Resources',
-    'osx64' : 'build/LlamaEnc3/osx64/LlamaEnc3.app/Contents/Resources',
+    'osx32' : 'build/LlamaEnc3/osx32/LlamaEnc3.app/Contents/Resources/app.nw',
+    'osx64' : 'build/LlamaEnc3/osx64/LlamaEnc3.app/Contents/Resources/app.nw',
     'win32' : 'build/LlamaEnc3/win32',
     'win64' : 'build/LlamaEnc3/win64'
 };
@@ -41,7 +41,6 @@ gulp.task('nw', ['clean'], function () {
         files.push("./node_modules/" + key + "/**/*.json");
     }
     files = files.concat(['!./node_modules/**/+(test|tests|example|examples)/**']);
-    console.log(files);
     var nw = new NwBuilder({
         files: files,
         platforms: ['osx32', 'osx64', 'win32', 'win64', 'linux64', 'linux32'],
@@ -53,13 +52,9 @@ gulp.task('nw', ['clean'], function () {
     nw.on('log',  console.log);
 
     // Build returns a promise
-    return nw.build().then(function (a) {
-        // for (var platform in binMap) {
-        //     copyBinaries(platform);
-        // }
-        console.log("nw build done");
-    }).catch(function (error) {
-        console.error(error);
+    return nw.build().catch(function (error) {
+        console.log(error);
+        throw error;
     });
 });
 
