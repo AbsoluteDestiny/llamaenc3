@@ -241,7 +241,7 @@
 										<div class="previewContainer" style="position: relative" data-bind="style: {'min-width': $root.vid().scaledstartwidth() + 'px'}">
 											<!-- <div data-bind="style: {width: vid().scaledstartwidth() +  'px', height: vid().scaledstartheight() + 'px', position: 'absolute', bottom: 0, right: 0}"> -->
 											<div>
-												<img alt="preview image" data-bind="attr: {src: $root.thumbpath() + '/' + $root.vid().currentThumb()}, style: {width: $root.vid().scaledstartwidth() + 'px', height: $root.vid().scaledstartheight() + 'px'}">
+												<img alt="preview image" data-bind="attr: {src: $root.vid().currentThumb()}, style: {width: $root.vid().scaledstartwidth() + 'px', height: $root.vid().scaledstartheight() + 'px'}">
 											</div>
 
 											<div class="cropzone" id="croppingt" data-bind="visible: vid().do_crop() && vid().cropt() > 0, style: {height: vid().cropt() + 'px', top:'0px', left: '0', right: 0}"></div>
@@ -255,7 +255,7 @@
 							</div>
 							<div class="cropFooter flexH" style="justify-content: center; padding: 1em;">
 								<div class="thumbnails" data-bind="foreach: { data: vid().thumbnails, as: 'thumbnail' }">
-									<img class="thumbnail" data-bind="css: {active: $index() == $root.vid().currentThumbIdx()}, attr: {src: $root.thumbpath() + '/' + thumbnail}, click: function() { $root.vid().currentThumbIdx($index());}">
+									<img class="thumbnail" data-bind="css: {active: $index() == $root.vid().currentThumbIdx()}, attr: {src: thumbnail}, click: function() { $root.vid().currentThumbIdx($index());}">
 								</div>
 							</div>
 						</div>

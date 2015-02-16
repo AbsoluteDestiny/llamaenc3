@@ -8,20 +8,19 @@ var logger = require('../js/logging.js').logger;
 var path = require('path');
 var sf = require('slice-file');
 
-FfmpegCommand.getAvailableFormats(function(err, formats) {
-  // logger.log('Available formats:');
-  // logger.log(formats);
-});
-FfmpegCommand.getAvailableCodecs(function(err, codecs) {
-  // logger.log('Available codecs:');
-  // logger.log(codecs);
-});
+// FfmpegCommand.getAvailableFormats(function(err, formats) {
+//   // logger.log('Available formats:');
+//   // logger.log(formats);
+// });
+// FfmpegCommand.getAvailableCodecs(function(err, codecs) {
+//   // logger.log('Available codecs:');
+//   // logger.log(codecs);
+// });
 
 function Check() {
   var self = this;
   if (process.platform !== "win32" || process.platform !== "darwin") {
     ffprobe.FFPROBE_PATH = process.env['FFPROBE_PATH'];
-    logger.log(process.env['FFMPEG_PATH']);
     FfmpegCommand.setFfmpegPath(process.env['FFMPEG_PATH']);
     FfmpegCommand.setFfprobePath(process.env['FFPROBE_PATH']);
   }
@@ -230,7 +229,7 @@ function Check() {
           options: {'peak': true}
         }
     ])
-      .output(llama.thumbpath() + '\\out%04d.png')
+      .output(path.join(llama.thumbpath(), 'out%04d.png'))
       .format('image2');
       if (llama.vid().duration()) {
         command.seek(Math.floor(llama.vid().duration()/10));
@@ -365,7 +364,9 @@ function Check() {
           // Thumbnails
           fs.readdir(llama.thumbpath(), function(err, files) {
             llama.vid().thumbnails.removeAll();
-            llama.vid().thumbnails(files);
+            llama.vid().thumbnails(_.map(files, function(f) {
+              return path.join(llama.thumbpath(), f);
+            }));
             llama.vid().currentThumbIdx(Math.floor(files.length / 2));
             llama.vid().scanned_ok(true);
             llama.in_progress(false);

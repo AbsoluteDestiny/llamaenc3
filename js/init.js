@@ -19,7 +19,6 @@ var Init = function() {
 				logger.log(path.join(basepath, "ffmpeg" + ext));
 				if (!fs.existsSync(path.join(basepath, "ffmpeg" + ext))) {
 					logger.error("I can't find the ffmpeg binaries!");
-					throw "I can't find the ffmpeg binaries!";
 				}
 			}
 			process.env.PATH = process.env['path'] + path.delimiter + basepath + path.sep;

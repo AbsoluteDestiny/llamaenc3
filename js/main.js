@@ -399,13 +399,14 @@ var LLamaModel = function () {
   });
   self.open = function() {
     if (self.outPath()) {
-      open(self.outPath());
+      // open(self.outPath());
+      gui.Shell.openItem(self.outPath());
     }
   };
 
   self.opendir = function() {
     if (self.outPath()) {
-      open(path.dirname(self.outPath()));
+      gui.Shell.showItemInFolder(self.outPath());
     }
   };
 
