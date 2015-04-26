@@ -19,7 +19,7 @@ var sf = require('slice-file');
 
 function Check() {
   var self = this;
-  if (process.platform !== "win32" || process.platform !== "darwin") {
+  if (process.platform == "win32" || process.platform == "darwin") {
     ffprobe.FFPROBE_PATH = process.env['FFPROBE_PATH'];
     FfmpegCommand.setFfmpegPath(process.env['FFMPEG_PATH']);
     FfmpegCommand.setFfprobePath(process.env['FFPROBE_PATH']);
