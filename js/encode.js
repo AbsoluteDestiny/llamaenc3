@@ -31,15 +31,7 @@ function Encode() {
         options: crop
       });
     }
-    // if (vid.sourceSar() != vid.par()) {
-    //   // set par
-    //   vfilters.push({
-    //     filter: 'setsar',
-    //     options: vid.par()
-    //   });
-    // }
-    // -ac 2 -strict experimental -ab 160k -s {ssize} -vcodec libx264 -preset slow -profile:v baseline -level 30 -maxrate 10000000 -bufsize 10000000 -b 1200k
-    // --ref 4 --qpmin 4
+
     var pass1 = new FfmpegCommand();
       llama.ffcancel = pass1.kill;
       pass1.input(vid.path())
@@ -58,38 +50,27 @@ function Encode() {
             }
           ]);
       }
-    // var bitrate = Math.ceil((2.3438 * vid.width()) + 1500);
-    // y = 1832.2ln(x) - 20154
-    // var bitrate = Math.ceil(1832.2 * Math.log(vid.width() * vid.height()) - 20154);
-    //y = 66.551x0.3147
+
     var bitrate = Math.ceil(66.551 * Math.pow(vid.width() * vid.height(), 0.3147));
-    // var bitrate = Math.ceil(30.489 * Math.pow(vid.width() * vid.height(), 0.3633));
+
     var bufsize = 2 * bitrate;
     var maxrate = Math.max(10000, bitrate);
-    // console.log(bitrate);
+
     pass1.addOptions('-preset medium')
       .addOptions('-pix_fmt yuv420p')
       .addOptions('-profile:v high')
       .addOptions('-level 4.0')
-      // .addOptions(vid.width() > 1280 ? '-crf 20' : vid.width() > 640 ? '-crf 19' : '-crf 18')
-      // .addOptions('-crf 18')
       .addOptions('-maxrate '+ maxrate + 'k')
       .addOptions('-b:v ' +  bitrate + 'k')
       .addOptions('-bufsize ' +  bufsize + 'k')
-      // .addOptions(vid.width() > 1280 ? '-b:v 6000k' : vid.width() > 848 ? '-b:v 4500k' : '-b:v 3000k')
-      // .addOptions(vid.width() > 1280 ? '-bufsize 12000k' : vid.width() > 848 ? '-bufsize 9000k' : '-bufsize 6000k')
-      // .addOptions('-b:v 5500k')
       .addOptions('-x264-params ref=4:qpmin=4')
       .addOptions('-movflags +faststart');
-      // .addOptions('-bufsize 10000000')
-      // .addOptions('-maxrate 10000000')
-      // 
+
       // set audio codec options
       if (llama.vid().audioPath()) {
         pass1.input(llama.vid().audioPath());
       }
-      pass1.audioCodec('aac')
-      .addOptions('-strict experimental')
+      pass1.audioCodec('libmp3lame')
       .audioBitrate(320)
       .audioChannels(2)
       .audioFrequency(48000)
@@ -152,7 +133,6 @@ function Encode() {
            var done = 30 * (check.convertHMS(progress.timemark) / vid.duration());
            llama.currentTime(new Date());
            llama.progress(done);
-           // $("#progress").css('width', done + "%");
         }
       })
       .on('end', function(err) {
