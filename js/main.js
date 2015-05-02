@@ -297,6 +297,11 @@ var LLamaModel = function () {
       });
   });
   self.in_progress = ko.observable(false);
+  self.in_progress.subscribe(function() {
+    if (!self.in_progress()) {
+      win.setProgressBar(-1);
+    }
+  });
   self.progress_title = ko.observable("");
   self.progres_description = ko.observable("");
   self.errorMessage = ko.observable("");
@@ -312,6 +317,13 @@ var LLamaModel = function () {
     // clipboard.set(self.warningMessage(), 'text');
   });
   self.progress = ko.observable(0.0);
+  self.progress.subscribe(function() {
+    if (self.in_progress() && 0 < self.progress() < 100) {
+      win.setProgressBar(self.progress() / 100);
+    } else {
+      win.setProgressBar(-1);
+    }
+  });
   // self.encodeProgress = ko.observable(0.0);
   self.startTime = ko.observable(0);
   self.currentTime = ko.observable(0);
