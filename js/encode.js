@@ -70,8 +70,11 @@ function Encode() {
       if (llama.vid().audioPath()) {
         pass1.input(llama.vid().audioPath());
       }
-      pass1.audioCodec('libmp3lame')
-      .audioBitrate(320)
+      pass1.audioCodec('aac')
+      .addOptions('-strict experimental')
+      // .addOptions('-cutoff 20000')
+      .audioBitrate(192)
+      // .audioQuality(2)
       .audioChannels(2)
       .audioFrequency(48000)
       .audioFilters('volume=' + vid.lufs() + 'dB')
