@@ -22,6 +22,14 @@ gulp.task('clean', function(cb) {
   del(['build', 'dist'], cb);
 });
 
+gulp.task('cleanbuild', function(cb) {
+  del(['build'], cb);
+});
+
+gulp.task('cleandist', function(cb) {
+  del(['dist'], cb);
+});
+
 gulp.task('nw', ['clean'], function () {
     var files = [
             './**/**',
@@ -96,7 +104,7 @@ gulp.task("copyBin", ['nw'],function() {
 // });
 
 
-gulp.task('zip', ['copyBin'], function() {
+gulp.task('zip', ['cleandist'], function() {
     var win32 = gulpFilter('**/osx32/**');
     var osx32 = gulpFilter('**/osx64/**');
     var osx64 = gulpFilter('**/win32/**');
