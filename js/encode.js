@@ -70,12 +70,16 @@ function Encode() {
       if (llama.vid().audioPath()) {
         pass1.input(llama.vid().audioPath());
       }
-      pass1.audioCodec('aac')
-      .addOptions('-strict experimental')
-      // .addOptions('-cutoff 20000')
-      .audioBitrate(192)
-      // .audioQuality(2)
-      .audioChannels(2)
+
+      if (process.platform == "win32" || (process.arch == "x64" && process.platform == "darwin")) {
+        pass1.audioCodec('libfdk_aac')
+        .audioBitrate(256);
+      } else {
+        pass1.audioCodec('aac')
+        .addOptions('-strict experimental')
+        .audioBitrate(192);
+      }
+      pass1.audioChannels(2)
       .audioFrequency(48000)
       .audioFilters('volume=' + vid.lufs() + 'dB')
       
@@ -91,7 +95,6 @@ function Encode() {
         .addOptions("-metadata", "network=VividCon");
       }
       pass1
-      // .addOptions("-metadata", "album='"  + vid.vidshow() || "Vidding")
       .addOptions("-metadata", "grouping=LlamaEnc3.0_api1_" + vid.silence_start() + "_" + vid.silence_end())
       // event callbacks
       .on('error', function(err, a, b) {

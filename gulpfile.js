@@ -50,6 +50,7 @@ gulp.task('nw', ['clean'], function () {
     }
     files = files.concat(['!./node_modules/**/+(test|tests|example|examples)/**']);
     var nw = new NwBuilder({
+        version: '0.12.0-alpha3',
         files: files,
         platforms: ['osx32', 'osx64', 'win32', 'win64', 'linux64', 'linux32'],
         macZip: false,
@@ -66,7 +67,7 @@ gulp.task('nw', ['clean'], function () {
     });
 });
 
-gulp.task("copyBin", ['nw'],function() {
+gulp.task("build", ['nw'],function() {
     var win32 = gulpFilter('**/win32/**');
     var osx32 = gulpFilter('**/osx32/**');
     var osx64 = gulpFilter('**/osx64/**');
@@ -88,21 +89,6 @@ gulp.task("copyBin", ['nw'],function() {
         .pipe(flatten())
         .pipe(gulp.dest(binMap['win64']));
 });
-
-// gulp.task("copyNM", ['nw'],function() {
-//     var win32 = gulpFilter('**/win32/**');
-//     var osx32 = gulpFilter('**/osx32/**');
-//     var osx64 = gulpFilter('**/osx64/**');
-//     var win64 = gulpFilter('**/win64/**');
-    
-//     console.log(sources);
-//     return gulp.src(sources, { "base" : "." })
-//         .pipe(gulp.dest(binMap['win32']))
-//         .pipe(gulp.dest(binMap['osx32']))
-//         .pipe(gulp.dest(binMap['osx64']))
-//         .pipe(gulp.dest(binMap['win64']));
-// });
-
 
 gulp.task('zip', ['cleandist'], function() {
     var win32 = gulpFilter('**/osx32/**');
@@ -137,4 +123,4 @@ gulp.task('zip', ['cleandist'], function() {
         .pipe(gulp.dest('dist'));
 });
 
-gulp.task('default', ['copyBin']);
+gulp.task('default', ['build']);
