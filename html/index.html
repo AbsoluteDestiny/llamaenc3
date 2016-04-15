@@ -113,18 +113,21 @@
 
 										<fieldset>
 											<legend>Fields and Interlacing:</legend>
-													<p class="help-block">The most likely choice is marked bold below.</p>
+													<p class="help-block">The most likely choice is marked with *** below.</p>
 													<div class="row">
 														<div class="col-xs-12 col-md-11 col-md-offset-1">
 															<label class="radio" data-bind="style: { fontWeight: vid().suggest_fo() == 'progressive' ? 'bold' : ''}">
+																<span data-bind="text: vid().suggest_fo() == 'progressive' ? ' ***' : ''"></span>
 																<input class="custom-radio" type="radio" name="fo" value="progressive" data-bind="checked: vid().fo_choice"/>Progressive (no interlacing)
 																<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
 															</label>
 															<label class="radio" data-bind="style: { fontWeight: vid().suggest_fo() == 'tff' ? 'bold' : ''}">
+																<span data-bind="text: vid().suggest_fo() == 'tff' ? ' ***' : ''"></span>
 																<input class="custom-radio" type="radio" name="fo" value="tff" data-bind="checked: vid().fo_choice"/>Interlaced - Top Field First
 																<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
 															</label>
 															<label class="radio" data-bind="style: { fontWeight: vid().suggest_fo() == 'bff' ? 'bold' : ''}">
+																<span data-bind="text: vid().suggest_fo() == 'bff' ? ' ***' : ''"></span>
 																<input class="custom-radio" type="radio" name="fo" value="bff" data-bind="checked: vid().fo_choice"/>Interlaced - Bottom Field First
 																<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
 															</label>
