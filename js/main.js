@@ -2,6 +2,22 @@ var gui = require('nw.gui'); //or global.window.nwDispatcher.requireNwGui() (see
 // Get the current window
 var win = gui.Window.get();
 var clipboard = gui.Clipboard.get();
+var platform = process.platform;
+
+win.on('close', function(event) {
+  if (platform !== 'darwin') {
+    win.close(true);
+  }
+  if (event == 'quit') {
+    win.close(true);
+  } else {
+    win.hide();
+  }
+});
+
+gui.App.on('reopen', function() {
+  win.show();
+});
 
 $(function() {
   win.maximize();
@@ -46,6 +62,12 @@ var vidders = new Datastore({
   filename: path.join(require('nw.gui').App.dataPath, 'vidders.db'),
   autoload: true
 });
+
+var analysis = new Datastore({
+  filename: path.join(require('nw.gui').App.dataPath, 'analysis.db'),
+  autoload: true
+});
+
 
 
 var goodInfoKeys = ["nb_streams", "nb_programs", "format_name", "start_time", "duration", "size", "bit_rate", "codec_name", "profile", "codec_type", "codec_time_base", "codec_tag_string", "width", "height", "has_b_frames", "sample_aspect_ratio", "display_aspect_ratio", "pix_fmt", "level", "color_range", "color_space", "color_transfer", "color_primaries", "chroma_location", "timecode", "is_avc", "r_frame_rate", "avg_frame_rate", "time_base", "start_pts", "duration_ts", "max_bit_rate", "bits_per_raw_sample", "nb_frames", "nb_read_frames", "nb_read_packets", "sample_fmt", "sample_rate", "channels", "channel_layout", "bits_per_sample"];
@@ -283,6 +305,9 @@ var LLamaModel = function () {
   self.ffprobe = ko.observable(false);
   self.vid = ko.observable("");
   self.vidPath = ko.observable("");
+  self.fdk_aac = false;
+  self.libx264 = ko.observable(false);
+
   //Status stuff
   self.updateAvailable = ko.observable("");
   self.githubAsset = ko.computed(function() {
@@ -332,7 +357,7 @@ var LLamaModel = function () {
       if (self.progress() > 10 || self.currentTime() - self.startTime() > 10000) {
         var rate = 1000 * (self.progress() / (self.currentTime() - self.startTime()));
         var seconds = (100 - self.progress()) / rate;
-        return humanizeDuration(parseInt(seconds * 1000, 10));
+        return humanizeDuration(parseInt(seconds * 1000, 10), { round: true });
       }
       return "calculating...";
     }
@@ -438,7 +463,7 @@ var LLamaModel = function () {
     return _.map(
       _.where(self.vvcShows(), {'con_year': self.vidshowYear()}),
       function(item) {
-        return {'text' : item.name, 'value' : self.vvcShows().indexOf(item)};
+        return {'text' : item.name, 'value' : "show" + self.vvcShows().indexOf(item)};
       });
   });
   self.vidshowChoice = ko.observable("");
@@ -462,6 +487,17 @@ var LLamaModel = function () {
       }
     }
     return sanitize(name) + ".m4v";
+  });
+
+  var Ffmpeg = require('fluent-ffmpeg');
+  var command = new Ffmpeg();
+  command.getAvailableCodecs(function(err, codecs) {
+    if (codecs["aac"] && codecs["aac"].canEncode) {
+      self.fdk_aac = true;
+    }
+    if (codecs["libx264"] && codecs["libx264"].canEncode) {
+      self.libx264(true);
+    }
   });
 
   $.get("http://vividcon.info/connect/showlist/1/", function(data) {
@@ -515,30 +551,6 @@ var LLamaModel = function () {
       self.in_progress(false);
     }
   };
-
-  exec('ffmpeg -version', function (error, stdout, stderr) {
-    // logger.log("checking ffmpeg");
-    if (!error) {
-      logger.log('stdout: ' + stdout);
-      self.ffmpeg(true);
-    } else {
-      logger.error("We can't find a copy of ffmpeg :(");
-      logger.log('error: ' + error);
-      logger.log('stderr: ' + stderr);
-    }
-  });
-
-  exec('ffprobe -version', function (error, stdout, stderr) {
-    // logger.log("checking ffprobe");
-    if (!error) {
-      logger.log('stdout: ' + stdout);
-      self.ffprobe(true);
-    } else {
-      logger.error("We can't find a copy of ffprobe :(");
-      logger.log('error: ' + error);
-      logger.log('stderr: ' + stderr);
-    }
-  });
 
   self.findUpdate = function() {
     var github = new GitHubApi({

@@ -8,22 +8,11 @@ var logger = require('../js/logging.js').logger;
 var path = require('path');
 var sf = require('slice-file');
 
-// FfmpegCommand.getAvailableFormats(function(err, formats) {
-//   // logger.log('Available formats:');
-//   // logger.log(formats);
-// });
-// FfmpegCommand.getAvailableCodecs(function(err, codecs) {
-//   // logger.log('Available codecs:');
-//   // logger.log(codecs);
-// });
-
 function Check() {
   var self = this;
-  if (process.platform == "win32" || process.platform == "darwin") {
-    ffprobe.FFPROBE_PATH = process.env['FFPROBE_PATH'];
-    FfmpegCommand.setFfmpegPath(process.env['FFMPEG_PATH']);
-    FfmpegCommand.setFfprobePath(process.env['FFPROBE_PATH']);
-  }
+  ffprobe.FFPROBE_PATH = process.env['FFPROBE_PATH'];
+  FfmpegCommand.setFfmpegPath(process.env['FFMPEG_PATH']);
+  FfmpegCommand.setFfprobePath(process.env['FFPROBE_PATH']);
 
   function probe(llama) {
     // Scan the vid file looking for video and audio
@@ -179,8 +168,14 @@ function Check() {
   }
   self.convertHMS = convertHMS;
 
-  function scan(llama) {
+  function scan(llama, cb) {
     var command = new FfmpegCommand();
+    // Check for libfdk_aac compatibility
+    command.getAvailableCodecs(function(err, codecs) {
+      if (codecs["libfdk_aac"] && codecs["libfdk_aac"].canEncode) {
+        llama.fdk_aac = true;
+      }
+    });
     var logdata = {
       'crop': '',
       'lufs': '',
@@ -247,16 +242,8 @@ function Check() {
           }
         ]);
       }
-      // .addOptions("-vf select=eq(pict_type\\,I)*not(mod(n\\,100))")
-      // .addOptions("-vf select=eq(pict_type\\,I)")
-      // .addOptions("-vf select=not(mod(n\\,5))")
-      // .addOptions("-vsync 0")
-      // .fps(12 / llama.vid().duration()) // Create ~12 screenshots
-      // .addOptions("-vsync 0")
-      // .fps(0.5) // choose every other I frame
-      // .addOptions('-qscale:v 2')
+
       command.on('start', function() {
-        // $("#open").hide();
         llama.startTime(new Date());
 
         log.matches(/crop=([\d]+):([\d]+):([\d]+):([\d]+)/, function(m, vars){

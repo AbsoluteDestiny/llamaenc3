@@ -1,7 +1,6 @@
 var logger = require('../js/logging.js').logger;
 var temp = require('temp');
 temp.track();
-var async = require('async');
 var check = require("../js/check.js");
 
 function File() {

@@ -11,20 +11,18 @@ var Init = function() {
 			ext = ".exe";
 		}
 		
-		if (platform === "win32" || platform === "darwin") {
-			var basepath = path.join(__dirname, "..");
+		var basepath = path.join(__dirname, "..");
+		logger.log(path.join(basepath, "ffmpeg" + ext));
+		if (!fs.existsSync(path.join(basepath, "ffmpeg" + ext))) {
+			basepath = path.dirname(process.execPath);
 			logger.log(path.join(basepath, "ffmpeg" + ext));
 			if (!fs.existsSync(path.join(basepath, "ffmpeg" + ext))) {
-				basepath = path.dirname(process.execPath);
-				logger.log(path.join(basepath, "ffmpeg" + ext));
-				if (!fs.existsSync(path.join(basepath, "ffmpeg" + ext))) {
-					logger.error("I can't find the ffmpeg binaries!");
-				}
+				logger.error("I can't find the ffmpeg binaries!");
 			}
-			process.env.PATH = process.env['path'] + path.delimiter + basepath + path.sep;
-			process.env['FFMPEG_PATH'] = path.join(basepath, "ffmpeg" + ext);
-			process.env['FFPROBE_PATH'] = path.join(basepath, "ffprobe" + ext);
 		}
+		process.env.PATH = process.env['path'] + path.delimiter + basepath + path.sep;
+		process.env['FFMPEG_PATH'] = path.join(basepath, "ffmpeg" + ext);
+		process.env['FFPROBE_PATH'] = path.join(basepath, "ffprobe" + ext);
 	}
 	this.start = start;
 };

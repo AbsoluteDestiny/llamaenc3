@@ -32,3 +32,6 @@ npm-debug.log
 # app binary dependencies
 bin
 cache
+dist
+ffmpeg.exe
+ffprobe.exe

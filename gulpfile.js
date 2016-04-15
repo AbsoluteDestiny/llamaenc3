@@ -1,10 +1,9 @@
 var fs = require('fs');
-var NwBuilder = require('node-webkit-builder');
+var NwBuilder = require('nw-builder');
 var gulp = require('gulp');
 var gulpFilter = require('gulp-filter');
 var flatten = require('gulp-flatten');
-var zip = require('gulp-zip');
-var archiver = require('archiver');
+var zip = require('gulp-archiver');
 var cp = require('glob-copy');
 var del = require('del');
 var packages = require('./package.json');
@@ -12,7 +11,8 @@ var version = packages.version;
 console.log(version);
 
 var binMap = {
-    'osx32' : 'build/LlamaEnc3/osx32/LlamaEnc3.app/Contents/Resources/app.nw',
+    'linux32' : 'build/LlamaEnc3/linux32',
+    'linux64' : 'build/LlamaEnc3/linux64',
     'osx64' : 'build/LlamaEnc3/osx64/LlamaEnc3.app/Contents/Resources/app.nw',
     'win32' : 'build/LlamaEnc3/win32',
     'win64' : 'build/LlamaEnc3/win64'
@@ -50,10 +50,10 @@ gulp.task('nw', ['clean'], function () {
     }
     files = files.concat(['!./node_modules/**/+(test|tests|example|examples)/**']);
     var nw = new NwBuilder({
-        version: '0.12.0-alpha3',
+        version: '0.12.3',
         files: files,
-        platforms: ['osx32', 'osx64', 'win32', 'win64', 'linux64', 'linux32'],
-        macZip: false,
+        platforms: ['osx64', 'win32', 'win64', 'linux64', 'linux32'],
+        zip: false,
         macIcns: './llama.icns',
         winIco: './llama.ico'
     });
@@ -68,19 +68,24 @@ gulp.task('nw', ['clean'], function () {
 });
 
 gulp.task("build", ['nw'],function() {
+    var linux32 = gulpFilter('**/linux32/**');
+    var linux64 = gulpFilter('**/linux64/**');
     var win32 = gulpFilter('**/win32/**');
-    var osx32 = gulpFilter('**/osx32/**');
-    var osx64 = gulpFilter('**/osx64/**');
     var win64 = gulpFilter('**/win64/**');
+    var osx64 = gulpFilter('**/osx64/**');
     return gulp.src(["bin/**/**"])
+        .pipe(linux32)
+        .pipe(flatten())
+        .pipe(gulp.dest(binMap['linux32']))
+        .pipe(linux32.restore())
+        .pipe(linux64)
+        .pipe(flatten())
+        .pipe(gulp.dest(binMap['linux64']))
+        .pipe(linux64.restore())
         .pipe(win32)
         .pipe(flatten())
         .pipe(gulp.dest(binMap['win32']))
         .pipe(win32.restore())
-        .pipe(osx32)
-        .pipe(flatten())
-        .pipe(gulp.dest(binMap['osx32']))
-        .pipe(osx32.restore())
         .pipe(osx64)
         .pipe(flatten())
         .pipe(gulp.dest(binMap['osx64']))
@@ -90,37 +95,51 @@ gulp.task("build", ['nw'],function() {
         .pipe(gulp.dest(binMap['win64']));
 });
 
-gulp.task('zip', ['cleandist'], function() {
-    var win32 = gulpFilter('**/osx32/**');
-    var osx32 = gulpFilter('**/osx64/**');
-    var osx64 = gulpFilter('**/win32/**');
-    var win64 = gulpFilter('**/win64/**');
-    var linux64 = gulpFilter('**/linux64/**');
-    var linux32 = gulpFilter('**/linux32/**');
-    return gulp.src('build/LlamaEnc3/**')
-        .pipe(win32)
-        .pipe(zip('LlamaEnc3-' + version + '-osx-32bit.zip'))
-        .pipe(gulp.dest('dist'))
-        .pipe(win32.restore())
-        .pipe(osx32)
-        .pipe(zip('LlamaEnc3-' + version + '-osx-64bit.zip'))
-        .pipe(gulp.dest('dist'))
-        .pipe(osx32.restore())
-        .pipe(osx64)
-        .pipe(zip('LlamaEnc3-' + version + '-win-32bit.zip'))
-        .pipe(gulp.dest('dist'))
-        .pipe(osx64.restore())
-        .pipe(win64)
-        .pipe(zip('LlamaEnc3-' + version + '-win-64bit.zip'))
-        .pipe(gulp.dest('dist'))
-        .pipe(win64.restore())
-        .pipe(linux32)
-        .pipe(zip('LlamaEnc3-' + version + '-linux-32bit.zip'))
-        .pipe(gulp.dest('dist'))
-        .pipe(linux32.restore())
-        .pipe(linux64)
-        .pipe(zip('LlamaEnc3-' + version + '-linux-64bit.zip'))
-        .pipe(gulp.dest('dist'));
+gulp.task('zip', ['cleandist'], function(cb) {
+    var fs = require('fs');
+    var path = require('path');
+    var archiver = require('archiver');
+    var async = require('async');
+    fs.mkdirSync(__dirname + '/dist/');
+
+    async.eachSeries(Object.keys(binMap), function(platform, callback) {
+        var ext = 'zip';
+        var type = 'zip';
+        var options = {};
+        var mode = {};
+
+        if (platform === 'linux64' || platform === 'linux32') {
+            ext = 'tar.gz';
+            type = 'tar';
+            options = {
+              gzip: true,
+              gzipOptions: {
+                level: 1
+              }
+            };
+            mode = {mode: 0755};
+        }
+        var output = fs.createWriteStream(path.join('dist', 'LlamaEnc3-' + version + '-' + platform.replace('32', '-32').replace('64', '-64') + 'bit.' + ext));
+        var archive = archiver(type, options);
+
+        output.on('close', function() {
+          console.log(archive.pointer() + ' total bytes');
+          console.log('archiver has been finalized and the output file descriptor has closed.');
+          callback();
+        });
+
+        archive.on('error', function(err) {
+          throw err;
+        });
+
+        archive.pipe(output);
+        archive.directory(path.join('./build/LlamaEnc3/', platform), 'LlamaEnc3', mode);
+        archive.finalize();
+    }, function (err) {
+        if (err) console.error(err.message);
+        cb();
+    });
+
 });
 
 gulp.task('default', ['build']);
