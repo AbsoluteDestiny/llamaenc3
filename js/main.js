@@ -469,7 +469,7 @@ var LLamaModel = function () {
   self.vidshowChoice = ko.observable("");
   self.vidshow = ko.computed(function() {
     if (self.vidshowChoice()) {
-      return self.vvcShows()[self.vidshowChoice()];
+      return self.vvcShows()[parseInt(self.vidshowChoice().replace('show', ''), 10)];
     }
   });
   self.showname = ko.computed(function() {
