@@ -108,7 +108,7 @@ gulp.task('zip', ['cleandist'], function(cb) {
         var options = {};
         var mode = {};
 
-        if (platform === 'linux64' || platform === 'linux32') {
+        if (platform === 'linux64' || platform === 'linux32' || platform === 'osx64') {
             ext = 'tar.gz';
             type = 'tar';
             options = {
