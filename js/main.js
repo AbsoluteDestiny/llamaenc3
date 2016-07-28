@@ -109,6 +109,10 @@ var VidModel = function(llama, path) {
     }
   });
   self.data = ko.observable("");
+  self.data.subscribe(function() {
+    console.log(self.duration());
+    self.custom_end(new Date(self.duration() * 1000).toISOString().substr(11, 8));
+  });
   self.audioData = ko.observable("");
   self.containerInfo = ko.pureComputed(function() {
     if (self.data()) {
@@ -149,12 +153,17 @@ var VidModel = function(llama, path) {
 
   self.nframes = null;
   self.duration = ko.pureComputed(function() {
-    if (self.data() && self.data().format) {
-      return parseFloat(self.data().format.duration);
+    if (self.data() && self.data().format && self.data().format.duration) {
+      return parseFloat(self.data().format.duration) || 0.0;
     } else {
       return 0;
     }
   });
+
+  self.custom_start = ko.observable("00:00:00");
+  self.custom_end = ko.observable("00:00:00");
+  self.fade_start = ko.observable(0);
+  self.fade_end = ko.observable(0);
 
 
   // Vid metadata
@@ -181,6 +190,8 @@ var VidModel = function(llama, path) {
   // Size and AR
 
   self.do_crop = ko.observable(false);
+  self.do_trim = ko.observable(false);
+  self.do_fade = ko.observable(false);
   self.startwidth = ko.observable("");
   self.sourceSar = ko.observable();
   self.customPar = ko.observable(1.0);
@@ -247,7 +258,7 @@ var VidModel = function(llama, path) {
     {value: 0, text: "Custom PAR"}
   ]);
   self.width = ko.pureComputed(function() {
-    return 4 * Math.floor(self.newWidth() * self.par()/4);
+    return 4 * Math.floor(self.newWidth()  * self.par() /4);
   });
   self.height = ko.pureComputed(function() {
     return 4 * Math.floor(self.newHeight()/4);

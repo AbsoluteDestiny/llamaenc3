@@ -355,6 +355,52 @@
 					</div>
 					<div class="row" data-bind="if: vid(), visible: !in_progress()">
 						<div class="col-xs-12 col-md-6">
+							<label class="checkbox" for="checkbox2">
+								<input type="checkbox" value="" id="checkbox2" data-toggle="checkbox" class="custom-checkbox" data-bind="checked: vid().do_trim">
+								<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+								Trim Vid
+							</label>
+						</div>
+						<div class="col-xs-12 col-md-6">
+							<label class="checkbox" for="checkbox3">
+								<input type="checkbox" value="" id="checkbox3" data-toggle="checkbox" class="custom-checkbox" data-bind="checked: vid().do_fade">
+								<span class="icons"><span class="icon-unchecked"></span><span class="icon-checked"></span></span>
+								Fade Vid
+							</label>
+						</div>
+					</div>
+					<div class="row" data-bind="if: vid(), visible: !in_progress()">
+						<div class="col-md-6">
+							<div class="row form-group" data-bind="if: vid().do_trim()">
+								<div class="col-xs-12 col-md-6">
+									<label for="duration1">Custom Start Time
+									</label>
+									<input type="text" value="00:00:00.000" id="duration1" class="form-control" data-bind="textInput: vid().custom_start">
+								</div>
+								<div class="col-xs-12 col-md-6">
+									<label for="duration1">Custom End Time
+									</label>
+									<input type="text" value="vid().duration" id="duration1" class="form-control" data-bind="textInput: vid().custom_end">
+								</div>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="row form-group" data-bind="if: vid().do_fade()">
+								<div class="col-xs-12 col-md-6">
+									<label for="duration1">Fade In (in seconds)
+									</label>
+									<input type="text" value="0.0" id="duration1" class="form-control" data-bind="textInput: vid().fade_start">
+								</div>
+								<div class="col-xs-12 col-md-6">
+									<label for="duration1">Fade Out (in seconds)
+									</label>
+									<input type="text" value="vid().duration" id="duration1" class="form-control" data-bind="textInput: vid().fade_end">
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row" data-bind="if: vid(), visible: !in_progress()">
+						<div class="col-xs-12 col-md-6">
 							<input class="sr-only" id="save" class="custom-file-input" type="file" accept=".m4v,video/mp4" data-bind="value: outPath, attr:{nwsaveas: suggestedFileName()}"/>
 										<button class="btn btn-success btn-lg center-block" id="saveSelect" data-bind="disable: !vid().convertable(), click: function() {document.querySelector('#save').click();}"><span class="fui-check"></span> Encode and save your vid!</button>
 						</div>
