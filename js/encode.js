@@ -31,6 +31,42 @@ function Encode() {
         options: crop
       });
     }
+    // fade
+    if (vid.do_fade()) {
+      if (vid.fade_start()) {
+        var fadestart = 0;
+        if (vid.do_trim()) {
+          fadestart = (new Date('1970-01-01T' + vid.custom_start() + 'Z').getTime() / 1000);
+        }
+        vfilters.push({
+          filter: 'fade',
+          options: {
+            t: 'in',
+            st: fadestart,
+            d: parseFloat(vid.fade_start())
+          }
+        });
+      }
+      if (vid.fade_end()) {
+        var fadeend = vid.duration() - vid.fade_end();
+        if (vid.do_trim()) {
+          fadeend = (new Date('1970-01-01T' + vid.custom_end() + 'Z').getTime() / 1000) - vid.fade_end();
+        }
+        vfilters.push({
+          filter: 'fade',
+          options: {
+            t: 'out',
+            st: fadeend,
+            d: parseFloat(vid.fade_end())
+          }
+        });
+      }
+    }
+
+    // par
+    vfilters.push('setsar=1/1');
+    vfilters.push('setdar=' +  vid.finalsize().replace('x', '/'));
+    console.log('vfilters', vfilters);
 
     var pass1 = new FfmpegCommand();
       llama.ffcancel = pass1.kill;
@@ -70,10 +106,44 @@ function Encode() {
       .audioBitrate(256)
       .audioChannels(2)
       .audioFrequency(48000)
-      .audioFilters('volume=' + vid.lufs() + 'dB')
-      
+      .audioFilters('volume=' + vid.lufs() + 'dB');
+      // fade
+      var afilters = [];
+      if (vid.do_fade()) {
+        if (vid.fade_start()) {
+          var fadestart = 0;
+          if (vid.do_trim()) {
+            fadestart = (new Date('1970-01-01T' + vid.custom_start() + 'Z').getTime() / 1000);
+          }
+          afilters.push({
+            filter: 'afade',
+            options: {
+              t: 'in',
+              st: fadestart,
+              d: parseFloat(vid.fade_start())
+            }
+          });
+        }
+        if (vid.fade_end()) {
+          var fadeend = vid.duration() - vid.fade_end();
+          if (vid.do_trim()) {
+            fadeend = (new Date('1970-01-01T' + vid.custom_end() + 'Z').getTime() / 1000) - vid.fade_end();
+          }
+          afilters.push({
+            filter: 'afade',
+            options: {
+              t: 'out',
+              st: fadeend,
+              d: parseFloat(vid.fade_end())
+            }
+          });
+        }
+      }
+      if (afilters.length) {
+        pass1.audioFilters(afilters);
+      }
       // set metadata
-      .format('mp4')
+      pass1.format('mp4')
       .addOptions("-metadata", "title="  + vid.title().trim().split("'").join("\'"));
       if (!vid.anonymous()) {
         pass1.addOptions("-metadata", "artist="  + vid.vidder().trim().split("'").join("\'"));
@@ -85,9 +155,20 @@ function Encode() {
       }
       pass1
       .addOptions("-metadata", "grouping=LlamaEnc3.3_api2_" + vid.silence_start() + "_" + vid.silence_end())
-      .output(llama.outPath())
+      .output(llama.outPath());
+      // set trim and fade
+      if (llama.vid().do_trim()) {
+        var real_end = (new Date('1970-01-01T' + vid.custom_end() + 'Z').getTime() / 1000) - (new Date('1970-01-01T' + vid.custom_start() + 'Z').getTime() / 1000);
+        console.log('trim vid', llama.vid().custom_start(), real_end)
+        // console.log(real_end);
+        pass1.duration(real_end)
+        .seek(llama.vid().custom_start());
+      }
+      if (llama.vid().do_fade()) {
+
+      }
       // event callbacks
-      .on('start', function() {
+      pass1.on('start', function() {
         llama.in_progress(true);
         llama.startTime(new Date());
       })
