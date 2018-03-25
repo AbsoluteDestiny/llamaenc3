@@ -50,12 +50,12 @@ gulp.task('nw', ['clean'], function () {
     }
     files = files.concat(['!./node_modules/**/+(test|tests|example|examples)/**']);
     var nw = new NwBuilder({
-        version: '0.12.3',
-        files: files,
-        platforms: ['osx64', 'win32', 'win64', 'linux64', 'linux32'],
-        zip: false,
-        macIcns: './llama.icns',
-        winIco: './llama.ico'
+      version: "0.29.2",
+      files: files,
+      platforms: ["osx64", "win32", "win64", "linux64", "linux32"],
+      zip: false,
+      macIcns: "./llama.icns",
+      winIco: "./llama.ico"
     });
 
     nw.on('log',  console.log);

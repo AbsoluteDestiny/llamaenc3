@@ -1,6 +1,7 @@
 var gui = require("nw.gui"); //or global.window.nwDispatcher.requireNwGui() (see https://github.com/rogerwang/node-webkit/issues/707)
 // Get the current window
-var win = gui.Window.get();
+var win = gui. Window.get();
+win.show();
 var clipboard = gui.Clipboard.get();
 var platform = process.platform;
 var Datastore = require("nedb");
@@ -563,8 +564,8 @@ var LLamaModel = function() {
     }
   });
 
-  self.vidders = ko.observableArray();
-  self.vvcShows = ko.observableArray();
+  self.vidders = ko.observableArray([]);
+  self.vvcShows = ko.observableArray([]);
   self.vidshowYear = ko.observable();
   self.vidshowYears = ko.pureComputed(function() {
     return _.uniq(_.pluck(self.vvcShows(), "con_year"), true);

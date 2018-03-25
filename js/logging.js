@@ -77,4 +77,12 @@ function Filter() {
     self.logger = _log;
 }
 
-module.exports = new Filter;
+module.exports = {
+  logger: {
+    log: function(e) { console.log(e) },
+    error: function(e) { console.error(e) },
+    debug: function(e) { console.debug(e) },
+    info: function(e) { console.info(e) },
+    warn: function(e) { console.warn(e) }
+  }
+};
