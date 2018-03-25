@@ -2,8 +2,7 @@
   "name": "LlamaEnc3",
   "version": "3.4.0",
   "main": "./html/index.html",
-  "description":
-    "An ffmpeg wrapper for encoding videos for Vividcon and the Vidding community",
+  "description": "An ffmpeg wrapper for encoding videos for Vividcon and the Vidding community",
   "author": "Ian Roberts <ian@absolutedestiny.org>",
   "window": {
     "title": "LlamaEnc3",
@@ -41,8 +40,7 @@
     "async": "0.9.0",
     "del": "^1.1.1",
     "file-extractor": "^0.6.1",
-    "fluent-ffmpeg":
-      "https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/tarball/master",
+    "fluent-ffmpeg": "https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/tarball/master",
     "github": "^0.2.3",
     "humanize-duration": "^3.7.0",
     "jQuery": "1.7.4",
@@ -50,6 +48,7 @@
     "nedb": "^1.1.1",
     "node-ffprobe": "git://github.com/nuky89/node-ffprobe",
     "open": "https://registry.npmjs.org/open/-/open-0.0.5.tgz",
+    "os-homedir": "^1.0.2",
     "sanitize-filename": "^1.1.1",
     "semver": "^4.2.0",
     "slice-file": "0.2.1",

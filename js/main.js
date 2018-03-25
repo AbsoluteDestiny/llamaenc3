@@ -32,6 +32,7 @@ var humanizeDuration = require("humanize-duration");
 var init = require("../js/init.js");
 var open = require("open");
 var path = require("path");
+var osHomedir = require("os-homedir");
 var sanitize = require("sanitize-filename");
 var semver = require("semver");
 var temp = require("temp");
@@ -80,6 +81,7 @@ $(function() {
       }
     });
   win.show();
+  $("#open").attr("nwworkingdir", osHomedir());
   // Register dev console to ctrl+d
   $("body").on("keypress", function(e) {
     if (e.which === 4 && e.ctrlKey === true) {
@@ -526,6 +528,7 @@ var LLamaModel = function() {
     if (self.vidPath()) {
       self.clearVid();
       self.vid(new VidModel(self, self.vidPath()));
+      $("#save").attr("nwworkingdir", path.dirname(self.vidPath()));
       file.setupTempFiles(self);
       check.probe(self);
     }
@@ -608,7 +611,7 @@ var LLamaModel = function() {
         name = "[" + self.showname() + "]" + name;
       }
     }
-    return sanitize(name) + ".m4v";
+    return path.join(path.dirname(self.vidPath()), sanitize(name) + ".m4v");
   });
 
   var Ffmpeg = require("fluent-ffmpeg");
