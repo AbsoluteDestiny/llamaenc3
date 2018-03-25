@@ -38,17 +38,17 @@ gulp.task('nw', ['clean'], function () {
             '!./bin/**',
             '!./dist/**',
             '!./build/**',
-            '!./node_modules/**',
+            // '!./node_modules/**',
             '!./cache/**',
             ];
     // Don't copy over the dev-dependencies!
-    for (var key in packages.dependencies) {
-        files.push("./node_modules/" + key + "/*.js");
-        files.push("./node_modules/" + key + "/*.json");
-        files.push("./node_modules/" + key + "/**/*.js");
-        files.push("./node_modules/" + key + "/**/*.json");
-    }
-    files = files.concat(['!./node_modules/**/+(test|tests|example|examples)/**']);
+    // for (var key in packages.dependencies) {
+    //     files.push("./node_modules/" + key + "/*.js");
+    //     files.push("./node_modules/" + key + "/*.json");
+    //     files.push("./node_modules/" + key + "/**/*.js");
+    //     files.push("./node_modules/" + key + "/**/*.json");
+    // }
+    // files = files.concat(['!./node_modules/**/+(test|tests|example|examples)/**']);
     var nw = new NwBuilder({
       version: "0.29.2",
       files: files,
@@ -106,7 +106,7 @@ gulp.task('zip', ['cleandist'], function(cb) {
         var ext = 'zip';
         var type = 'zip';
         var options = {};
-        var mode = {};
+        var mode = { mode: 0755 };
 
         if (platform === 'linux64' || platform === 'linux32' || platform === 'osx64') {
             ext = 'tar.gz';

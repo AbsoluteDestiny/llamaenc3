@@ -2,6 +2,16 @@ var gui = require("nw.gui"); //or global.window.nwDispatcher.requireNwGui() (see
 // Get the current window
 var win = gui. Window.get();
 win.show();
+// Register dev console to ctrl+d
+$("body").on("keypress", function(e) {
+  if (e.which === 4 && e.ctrlKey === true) {
+    if (win.isDevToolsOpen()) {
+      win.closeDevTools();
+    } else {
+      win.showDevTools();
+    }
+  }
+});
 var clipboard = gui.Clipboard.get();
 var platform = process.platform;
 var Datastore = require("nedb");
@@ -83,16 +93,6 @@ $(function() {
     });
   win.show();
   $("#open").attr("nwworkingdir", osHomedir());
-  // Register dev console to ctrl+d
-  $("body").on("keypress", function(e) {
-    if (e.which === 4 && e.ctrlKey === true) {
-      if (win.isDevToolsOpen()) {
-        win.closeDevTools();
-      } else {
-        win.showDevTools();
-      }
-    }
-  });
 });
 
 var goodInfoKeys = [
