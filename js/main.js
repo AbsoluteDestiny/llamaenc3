@@ -1,29 +1,87 @@
-var gui = require('nw.gui'); //or global.window.nwDispatcher.requireNwGui() (see https://github.com/rogerwang/node-webkit/issues/707)
+var gui = require("nw.gui"); //or global.window.nwDispatcher.requireNwGui() (see https://github.com/rogerwang/node-webkit/issues/707)
 // Get the current window
 var win = gui.Window.get();
 var clipboard = gui.Clipboard.get();
 var platform = process.platform;
-
-win.on('close', function(event) {
-  if (platform !== 'darwin') {
+var Datastore = require("nedb");
+win.on("close", function(event) {
+  if (platform !== "darwin") {
     win.close(true);
   }
-  if (event == 'quit') {
+  if (event == "quit") {
     win.close(true);
   } else {
     win.hide();
   }
 });
 
-gui.App.on('reopen', function() {
+gui.App.on("reopen", function() {
   win.show();
 });
 
+var init = require("../js/init.js");
+init.start();
+var LM;
+var _ = require("lodash");
+var del = require("del");
+var exec = require("child_process").exec;
+var fs = require("fs");
+var GitHubApi = require("github");
+var https = require("https");
+var humanizeDuration = require("humanize-duration");
+var init = require("../js/init.js");
+var open = require("open");
+var path = require("path");
+var sanitize = require("sanitize-filename");
+var semver = require("semver");
+var temp = require("temp");
+
+var check = require("../js/check.js");
+var encode = require("../js/encode.js");
+var file = require("../js/file.js");
+var logger = require("../js/logging.js").logger;
+var packagejson = require("../package.json");
+var vidders = new Datastore({
+  filename: path.join(require("nw.gui").App.dataPath, "vidders.db"),
+  autoload: true
+});
+
+var analysis = new Datastore({
+  filename: path.join(require("nw.gui").App.dataPath, "analysis.db"),
+  autoload: true
+});
+var winSize = new Datastore({
+  filename: path.join(require("nw.gui").App.dataPath, "window.db"),
+  autoload: true
+});
+
+win.on("resize", function(width, height) {
+  winSize.update({ _id: "window" }, { $set: { width: width, height: height } }, { upsert: true });
+});
+
+win.on("maximize", function() {
+  winSize.update({ _id: "window" }, { $set: { isFullScreen: true } });
+});
+
+win.on("unmaximize", function() {
+  winSize.update({ _id: "window" }, { $set: { isFullScreen: false } });
+});
+
 $(function() {
-  win.maximize();
+  // win.maximize();
+  var storedWinsize = winSize
+    .findOne({ _id: "window" })
+    .exec(function(err, data) {
+      if (data) {
+        win.resizeTo(data.width, data.height);
+        if (data.isFullScreen) {
+          win.maximize();
+        }
+      }
+    });
   win.show();
   // Register dev console to ctrl+d
-  $("body").on('keypress', function(e) {
+  $("body").on("keypress", function(e) {
     if (e.which === 4 && e.ctrlKey === true) {
       if (win.isDevToolsOpen()) {
         win.closeDevTools();
@@ -33,44 +91,50 @@ $(function() {
     }
   });
 });
-var init = require('../js/init.js');
-init.start();
 
-var LM;
-var _ = require('lodash');
-var del = require('del');
-var exec = require('child_process').exec;
-var fs = require('fs');
-var GitHubApi = require("github");
-var https = require('https');
-var humanizeDuration = require("humanize-duration");
-var init = require('../js/init.js');
-var open = require('open');
-var path = require('path');
-var sanitize = require("sanitize-filename");
-var semver = require('semver');
-var temp = require('temp');
-
-var check = require('../js/check.js');
-var encode = require('../js/encode.js');
-var file = require('../js/file.js');
-var logger = require('../js/logging.js').logger;
-var packagejson = require("../package.json");
-
-var Datastore = require('nedb');
-var vidders = new Datastore({
-  filename: path.join(require('nw.gui').App.dataPath, 'vidders.db'),
-  autoload: true
-});
-
-var analysis = new Datastore({
-  filename: path.join(require('nw.gui').App.dataPath, 'analysis.db'),
-  autoload: true
-});
-
-
-
-var goodInfoKeys = ["nb_streams", "nb_programs", "format_name", "start_time", "duration", "size", "bit_rate", "codec_name", "profile", "codec_type", "codec_time_base", "codec_tag_string", "width", "height", "has_b_frames", "sample_aspect_ratio", "display_aspect_ratio", "pix_fmt", "level", "color_range", "color_space", "color_transfer", "color_primaries", "chroma_location", "timecode", "is_avc", "r_frame_rate", "avg_frame_rate", "time_base", "start_pts", "duration_ts", "max_bit_rate", "bits_per_raw_sample", "nb_frames", "nb_read_frames", "nb_read_packets", "sample_fmt", "sample_rate", "channels", "channel_layout", "bits_per_sample"];
+var goodInfoKeys = [
+  "nb_streams",
+  "nb_programs",
+  "format_name",
+  "start_time",
+  "duration",
+  "size",
+  "bit_rate",
+  "codec_name",
+  "profile",
+  "codec_type",
+  "codec_time_base",
+  "codec_tag_string",
+  "width",
+  "height",
+  "has_b_frames",
+  "sample_aspect_ratio",
+  "display_aspect_ratio",
+  "pix_fmt",
+  "level",
+  "color_range",
+  "color_space",
+  "color_transfer",
+  "color_primaries",
+  "chroma_location",
+  "timecode",
+  "is_avc",
+  "r_frame_rate",
+  "avg_frame_rate",
+  "time_base",
+  "start_pts",
+  "duration_ts",
+  "max_bit_rate",
+  "bits_per_raw_sample",
+  "nb_frames",
+  "nb_read_frames",
+  "nb_read_packets",
+  "sample_fmt",
+  "sample_rate",
+  "channels",
+  "channel_layout",
+  "bits_per_sample"
+];
 
 var audioFile = function(llama, path) {
   var self = this;
@@ -105,51 +169,65 @@ var VidModel = function(llama, path) {
   self.currentThumbIdx = ko.observable(0);
   self.currentThumb = ko.pureComputed(function() {
     if (self.thumbnails().length) {
-      return self.thumbnails()[Math.min(self.currentThumbIdx(), self.thumbnails().length - 1)];
+      return self.thumbnails()[
+        Math.min(self.currentThumbIdx(), self.thumbnails().length - 1)
+      ];
     }
   });
   self.data = ko.observable("");
   self.data.subscribe(function() {
     console.log(self.duration());
-    self.custom_end(new Date(self.duration() * 1000).toISOString().substr(11, 8));
+    self.custom_end(
+      new Date(self.duration() * 1000).toISOString().substr(11, 8)
+    );
   });
   self.audioData = ko.observable("");
   self.containerInfo = ko.pureComputed(function() {
     if (self.data()) {
       return _.chain(self.data().format)
-              .pick(goodInfoKeys)
-              .pairs()
-              .value();
+        .pick(goodInfoKeys)
+        .pairs()
+        .value();
     }
   });
   self.videoInfo = ko.pureComputed(function() {
     if (self.data()) {
       return _.chain(self.data().streams)
-              .find({codec_type: "video"})
-              .pick(goodInfoKeys)
-              .pairs()
-              .value();
+        .find({ codec_type: "video" })
+        .pick(goodInfoKeys)
+        .pairs()
+        .value();
     }
   });
   self.audioInfo = ko.pureComputed(function() {
     if (self.data()) {
       var data = self.audioData() || self.data();
       return _.chain(data.streams)
-              .find({codec_type: "audio"})
-              .pick(goodInfoKeys)
-              .pairs()
-              .value();
+        .find({ codec_type: "audio" })
+        .pick(goodInfoKeys)
+        .pairs()
+        .value();
     }
   });
   self.copyInfo = function() {
     if (self.data()) {
-      var template = 'Container:\n\n<% _.forEach(format, function(item) { %><%- item[0] %>: <%- item[1] %>\n<% }); %>\n\n';
-      template = template + 'Video:\n\n<% _.forEach(video, function(item) { %><%- item[0] %>: <%- item[1] %>\n<% }); %>\n\n';
-      template = template + 'Audio:\n\n<% _.forEach(audio, function(item) { %><%- item[0] %>: <%- item[1] %>\n<% }); %>';
-      clipboard.set(_.template(template, {format: self.containerInfo(), video: self.videoInfo(), audio: self.audioInfo()}));
+      var template =
+        "Container:\n\n<% _.forEach(format, function(item) { %><%- item[0] %>: <%- item[1] %>\n<% }); %>\n\n";
+      template =
+        template +
+        "Video:\n\n<% _.forEach(video, function(item) { %><%- item[0] %>: <%- item[1] %>\n<% }); %>\n\n";
+      template =
+        template +
+        "Audio:\n\n<% _.forEach(audio, function(item) { %><%- item[0] %>: <%- item[1] %>\n<% }); %>";
+      clipboard.set(
+        _.template(template, {
+          format: self.containerInfo(),
+          video: self.videoInfo(),
+          audio: self.audioInfo()
+        })
+      );
     }
   };
-
 
   self.nframes = null;
   self.duration = ko.pureComputed(function() {
@@ -164,7 +242,6 @@ var VidModel = function(llama, path) {
   self.custom_end = ko.observable("00:00:00");
   self.fade_start = ko.observable(0);
   self.fade_end = ko.observable(0);
-
 
   // Vid metadata
   self.title = ko.observable("");
@@ -213,10 +290,16 @@ var VidModel = function(llama, path) {
   self.cropTo704 = ko.observable(false);
   // If we are cropping to 704, crop is 8 or user crop if larger.
   self.actualcropl = ko.computed(function() {
-    return Math.max(self.cropTo704() ? 8 : 0, self.do_crop() ? parseInt(self.cropl(), 10) : 0);
+    return Math.max(
+      self.cropTo704() ? 8 : 0,
+      self.do_crop() ? parseInt(self.cropl(), 10) : 0
+    );
   });
   self.actualcropr = ko.computed(function() {
-    return Math.max(self.cropTo704() ? 8 : 0, self.do_crop() ? parseInt(self.cropr(), 10) : 0);
+    return Math.max(
+      self.cropTo704() ? 8 : 0,
+      self.do_crop() ? parseInt(self.cropr(), 10) : 0
+    );
   });
   self.scaledstartwidth = ko.computed(function() {
     return self.startwidth() * self.par();
@@ -226,17 +309,27 @@ var VidModel = function(llama, path) {
     return self.startheight();
   });
   self.newWidth = ko.computed(function() {
-    return (self.startwidth() - (self.actualcropl() + self.actualcropr()));
+    return self.startwidth() - (self.actualcropl() + self.actualcropr());
   });
   self.newHeight = ko.computed(function() {
     if (self.do_crop()) {
-      return (self.startheight() - (parseInt(self.cropt(), 10) + parseInt(self.cropb(), 10)));
+      return (
+        self.startheight() -
+        (parseInt(self.cropt(), 10) + parseInt(self.cropb(), 10))
+      );
     }
     return self.startheight();
   });
   self.crop = ko.computed(function() {
     if (self.do_crop()) {
-      var crop = self.newWidth() + ":" + self.newHeight() + ":" + self.actualcropl() + ":" + self.cropt();
+      var crop =
+        self.newWidth() +
+        ":" +
+        self.newHeight() +
+        ":" +
+        self.actualcropl() +
+        ":" +
+        self.cropt();
       return crop;
     }
     return "";
@@ -247,21 +340,21 @@ var VidModel = function(llama, path) {
   self.bff = ko.observable(0);
   self.suggest_fo = ko.observable("");
   self.fo_choice = ko.observable("");
-  
+
   self.parOptions = ko.observableArray([
-    {value:1, ffmpeg: 1, text: "Square Pixels (1.0)"},
-    {value:10/11, ffmpeg: 8/9, text: "4:3 NTSC DVD (0.90)"},
-    {value:40/33, ffmpeg: 32/27, text: "16:9 NTSC DVD (1.21)"},
-    {value:12/11, ffmpeg: 16/15, text: "4:3 PAL DVD (1.09)"},
-    {value:16/11, ffmpeg: 64/45, text: "16:9 PAL DVD (1.45)"},
+    { value: 1, ffmpeg: 1, text: "Square Pixels (1.0)" },
+    { value: 10 / 11, ffmpeg: 8 / 9, text: "4:3 NTSC DVD (0.90)" },
+    { value: 40 / 33, ffmpeg: 32 / 27, text: "16:9 NTSC DVD (1.21)" },
+    { value: 12 / 11, ffmpeg: 16 / 15, text: "4:3 PAL DVD (1.09)" },
+    { value: 16 / 11, ffmpeg: 64 / 45, text: "16:9 PAL DVD (1.45)" },
     // {value: 4/3, text: "16:9 HDV / HDCAM (1.333)"},
-    {value: 0, text: "Custom PAR"}
+    { value: 0, text: "Custom PAR" }
   ]);
   self.width = ko.pureComputed(function() {
-    return 4 * Math.floor(self.newWidth()  * self.par() /4);
+    return 4 * Math.floor(self.newWidth() * self.par() / 4);
   });
   self.height = ko.pureComputed(function() {
-    return 4 * Math.floor(self.newHeight()/4);
+    return 4 * Math.floor(self.newHeight() / 4);
   });
   self.finalsize = ko.pureComputed(function() {
     var scale = 1;
@@ -274,8 +367,8 @@ var VidModel = function(llama, path) {
         scale = 1080 / self.height();
       }
     }
-    var scaleV = 4 * Math.floor(self.width() * scale/4);
-    var scaleH = 4 * Math.floor(self.height() * scale/4);
+    var scaleV = 4 * Math.floor(self.width() * scale / 4);
+    var scaleH = 4 * Math.floor(self.height() * scale / 4);
     return scaleV + "x" + scaleH;
   });
 
@@ -283,9 +376,7 @@ var VidModel = function(llama, path) {
   self.convertable = ko.computed(function() {
     return self.fieldOptionsReady() && self.metadataReady();
   });
-
 };
-
 
 var StepModel = function(title, done_test) {
   var self = this;
@@ -309,7 +400,7 @@ var StepModel = function(title, done_test) {
   }
 };
 
-var LLamaModel = function () {
+var LLamaModel = function() {
   var self = this;
   self.version = packagejson.version;
   self.ffmpeg = ko.observable(false);
@@ -324,13 +415,13 @@ var LLamaModel = function () {
   self.githubAsset = ko.computed(function() {
     var platform = process.platform;
     var arch = process.arch;
-    var base = platform === "win32" ? "win" : platform === "darwin" ? "osx" : "linux";
-    var bit = arch === "x64" ? '64bit' : '32bit';
+    var base =
+      platform === "win32" ? "win" : platform === "darwin" ? "osx" : "linux";
+    var bit = arch === "x64" ? "64bit" : "32bit";
     // console.log(base + "-" + bit);
-    return _.find(self.updateAvailable().assets,
-      function(item) {
-         return _.contains(item.name, base + "-" + bit);
-      });
+    return _.find(self.updateAvailable().assets, function(item) {
+      return _.contains(item.name, base + "-" + bit);
+    });
   });
   self.in_progress = ko.observable(false);
   self.in_progress.subscribe(function() {
@@ -344,7 +435,7 @@ var LLamaModel = function () {
   self.errorMessage.subscribe(function() {
     self.in_progress(false);
     win.showDevTools();
-    clipboard.set(self.errorMessage(), 'text');
+    clipboard.set(self.errorMessage(), "text");
   });
   self.warningMessage = ko.observable("");
   self.warningMessage.subscribe(function() {
@@ -365,8 +456,12 @@ var LLamaModel = function () {
   self.currentTime = ko.observable(0);
   self.ETA = ko.pureComputed(function() {
     if (self.in_progress() && self.currentTime() && self.progress()) {
-      if (self.progress() > 10 || self.currentTime() - self.startTime() > 10000) {
-        var rate = 1000 * (self.progress() / (self.currentTime() - self.startTime()));
+      if (
+        self.progress() > 10 ||
+        self.currentTime() - self.startTime() > 10000
+      ) {
+        var rate =
+          1000 * (self.progress() / (self.currentTime() - self.startTime()));
         var seconds = (100 - self.progress()) / rate;
         return humanizeDuration(parseInt(seconds * 1000, 10), { round: true });
       }
@@ -378,7 +473,7 @@ var LLamaModel = function () {
   self.step = ko.observable(0);
   self.step.subscribe(function() {
     $(function() {
-      $("select").select2({dropdownCssClass: 'dropdown-inverse'});
+      $("select").select2({ dropdownCssClass: "dropdown-inverse" });
       $('[data-toggle="switch"]').bootstrapSwitch();
     });
   });
@@ -409,23 +504,22 @@ var LLamaModel = function () {
   step5.needs.push(step4);
   self.steps([step1, step2, step3, step4, step5]);
 
-
   // Temporary file management
   self.logpath = ko.observable("");
   self.thumbpath = ko.observable("");
-  
+
   // Vid info
   self.vid.subscribe(function() {
     if (self.vid()) {
       step1.done(true);
     }
   });
-  self.vidPath.extend({ notify: 'always' });
+  self.vidPath.extend({ notify: "always" });
   self.clearVid = function() {
     self.step(0);
     self.progress(0);
     self.vid(null);
-    $('#open').val('');
+    $("#open").val("");
     temp.cleanupSync();
   };
   self.vidPath.subscribe(function() {
@@ -441,7 +535,7 @@ var LLamaModel = function () {
   };
 
   self.outPath = ko.observable("");
-  self.outPath.extend({ notify: 'always' });
+  self.outPath.extend({ notify: "always" });
   self.outPath.subscribe(function() {
     encode.make_mp4(self);
   });
@@ -460,7 +554,9 @@ var LLamaModel = function () {
 
   self.largeVid = ko.pureComputed(function() {
     if (self.vid()) {
-      return Math.max($('.container:first').width(), self.vid().startwidth()) + "px";
+      return (
+        Math.max($(".container:first").width(), self.vid().startwidth()) + "px"
+      );
     }
   });
 
@@ -468,19 +564,25 @@ var LLamaModel = function () {
   self.vvcShows = ko.observableArray();
   self.vidshowYear = ko.observable();
   self.vidshowYears = ko.pureComputed(function() {
-    return _.uniq(_.pluck(self.vvcShows(), 'con_year'), true);
+    return _.uniq(_.pluck(self.vvcShows(), "con_year"), true);
   });
   self.vidshowsByYear = ko.pureComputed(function() {
     return _.map(
-      _.where(self.vvcShows(), {'con_year': self.vidshowYear()}),
+      _.where(self.vvcShows(), { con_year: self.vidshowYear() }),
       function(item) {
-        return {'text' : item.name, 'value' : "show" + self.vvcShows().indexOf(item)};
-      });
+        return {
+          text: item.name,
+          value: "show" + self.vvcShows().indexOf(item)
+        };
+      }
+    );
   });
   self.vidshowChoice = ko.observable("");
   self.vidshow = ko.computed(function() {
     if (self.vidshowChoice()) {
-      return self.vvcShows()[parseInt(self.vidshowChoice().replace('show', ''), 10)];
+      return self.vvcShows()[
+        parseInt(self.vidshowChoice().replace("show", ""), 10)
+      ];
     }
   });
   self.showname = ko.computed(function() {
@@ -492,7 +594,16 @@ var LLamaModel = function () {
   self.suggestedFileName = ko.computed(function() {
     var name = "Vid";
     if (self.vid() && self.vid().vidder() && self.vid().title()) {
-      name = self.vid().vidder().trim() + "-" + self.vid().title().trim();
+      name =
+        self
+          .vid()
+          .vidder()
+          .trim() +
+        "-" +
+        self
+          .vid()
+          .title()
+          .trim();
       if (self.vidshow()) {
         name = "[" + self.showname() + "]" + name;
       }
@@ -500,7 +611,7 @@ var LLamaModel = function () {
     return sanitize(name) + ".m4v";
   });
 
-  var Ffmpeg = require('fluent-ffmpeg');
+  var Ffmpeg = require("fluent-ffmpeg");
   var command = new Ffmpeg();
   command.getAvailableCodecs(function(err, codecs) {
     if (codecs["aac"] && codecs["aac"].canEncode) {
@@ -513,8 +624,8 @@ var LLamaModel = function () {
 
   $.get("http://vividcon.info/connect/showlist/1/", function(data) {
     var vidshows = _.chain(data)
-    .where({ 'model': 'viddb.vidshow' })
-    .sortBy([
+      .where({ model: "viddb.vidshow" })
+      .sortBy([
         function(model) {
           return -1 * model.fields.con_year;
         },
@@ -525,14 +636,15 @@ var LLamaModel = function () {
           return model.fields.name;
         }
       ])
-    .filter(function(model) { return !model.fields.internal;})
-    .map(function(model) {
-      return model.fields;
-    })
-    .value();
+      .filter(function(model) {
+        return !model.fields.internal;
+      })
+      .map(function(model) {
+        return model.fields;
+      })
+      .value();
     self.vvcShows(vidshows);
   });
-
 
   self.analyse = function() {
     // TODO: cache the result of this.
@@ -548,16 +660,23 @@ var LLamaModel = function () {
         self.vid().startwidth(parseInt(stream.width, 10));
         self.vid().startheight(parseInt(stream.height, 10));
         self.vid().nframes = stream.nb_frames;
-      } else { missing.push("Video"); }
-      if (stream.codec_type === "audio") { hasAudio = true;}
-        else { missing.push("Audio"); }
+      } else {
+        missing.push("Video");
+      }
+      if (stream.codec_type === "audio") {
+        hasAudio = true;
+      } else {
+        missing.push("Audio");
+      }
     }
     if (hasVideo && hasAudio) {
       // logger.log(self.vid().width());
       // logger.log(self.vid().height());
       check.scan(self);
     } else {
-      self.errorMessage(self.vidPath() + " has no " + missing.join(" or ") + " streams.");
+      self.errorMessage(
+        self.vidPath() + " has no " + missing.join(" or ") + " streams."
+      );
       self.clearVid();
       self.in_progress(false);
     }
@@ -565,12 +684,14 @@ var LLamaModel = function () {
 
   self.findUpdate = function() {
     var github = new GitHubApi({
-      version: "3.0.0",
+      version: "3.0.0"
     });
-    github.releases.listReleases({
+    github.releases.listReleases(
+      {
         owner: "AbsoluteDestiny",
         repo: "llamaenc3"
-    }, function(err, res) {
+      },
+      function(err, res) {
         if (!err) {
           var latest = res[0];
           if (semver.gt(latest.tag_name, packagejson.version)) {
@@ -578,25 +699,34 @@ var LLamaModel = function () {
             $("#updateModal").modal();
           }
         }
-    });
+      }
+    );
   };
   self.findUpdate();
 
   self.saveVidder = function() {
     if (!self.vid().anonymous()) {
-      vidders.update({ name: self.vid().author() }, { $inc: { count: 1 } }, { upsert: true }, function () {
-        self.syncVidders();
-      });
+      vidders.update(
+        { name: self.vid().author() },
+        { $inc: { count: 1 } },
+        { upsert: true },
+        function() {
+          self.syncVidders();
+        }
+      );
     }
   };
 
   self.syncVidders = function() {
-    vidders.find({count: { $gt: 0 }}).sort({ name: 1 }).exec(function(err, data) {
-      if (data) {
-        // console.log(data);
-        self.vidders(data);
-      }
-    });
+    vidders
+      .find({ count: { $gt: 0 } })
+      .sort({ name: 1 })
+      .exec(function(err, data) {
+        if (data) {
+          // console.log(data);
+          self.vidders(data);
+        }
+      });
   };
   self.syncVidders();
 };

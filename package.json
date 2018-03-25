@@ -2,7 +2,8 @@
   "name": "LlamaEnc3",
   "version": "3.4.0",
   "main": "./html/index.html",
-  "description": "An ffmpeg wrapper for encoding videos for Vividcon and the Vidding community",
+  "description":
+    "An ffmpeg wrapper for encoding videos for Vividcon and the Vidding community",
   "author": "Ian Roberts <ian@absolutedestiny.org>",
   "window": {
     "title": "LlamaEnc3",
@@ -40,7 +41,8 @@
     "async": "0.9.0",
     "del": "^1.1.1",
     "file-extractor": "^0.6.1",
-    "fluent-ffmpeg": "https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/tarball/master",
+    "fluent-ffmpeg":
+      "https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/tarball/master",
     "github": "^0.2.3",
     "humanize-duration": "^3.7.0",
     "jQuery": "1.7.4",
@@ -52,6 +54,18 @@
     "semver": "^4.2.0",
     "slice-file": "0.2.1",
     "temp": "^0.8.1"
+  },
+  "optionalDependencies": {
+    "@ffmpeg-installer/darwin-x64": "^4.0.3",
+    "@ffmpeg-installer/linux-ia32": "^4.0.2",
+    "@ffmpeg-installer/linux-x64": "^4.0.2",
+    "@ffmpeg-installer/win32-ia32": "^4.0.2",
+    "@ffmpeg-installer/win32-x64": "^4.0.1",
+    "@ffprobe-installer/darwin-x64": "4.0.2",
+    "@ffprobe-installer/linux-ia32": "4.0.2",
+    "@ffprobe-installer/linux-x64": "4.0.2",
+    "@ffprobe-installer/win32-ia32": "4.0.1",
+    "@ffprobe-installer/win32-x64": "4.0.1"
   },
   "preferGlobal": true,
   "private": true,
