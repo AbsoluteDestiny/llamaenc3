@@ -153,8 +153,17 @@ function Encode() {
         .addOptions("-metadata", "show="  + llama.showname().trim().split("'").join("\'"))
         .addOptions("-metadata", "network=VividCon");
       }
+      var silence_start = vid.silence_start();
+      var silence_end = vid.silence_end();
+      if (llama.vid().do_trim()) {
+        silence_start -= (new Date('1970-01-01T' + vid.custom_start() + 'Z').getTime() / 1000);
+        silence_end -= vid.duration() - (new Date('1970-01-01T' + vid.custom_end() + 'Z').getTime() / 1000)
+      }
+      // console.log('silence');
+      // console.log(vid.silence_start(), silence_start);
+      // console.log(vid.silence_end(), silence_end);
       pass1
-      .addOptions("-metadata", "grouping=LlamaEnc3.3_api2_" + vid.silence_start() + "_" + vid.silence_end())
+      .addOptions("-metadata", "grouping=LlamaEnc3.3_api2_" + silence_start + "_" + silence_end)
       .output(llama.outPath());
       // set trim and fade
       if (llama.vid().do_trim()) {
