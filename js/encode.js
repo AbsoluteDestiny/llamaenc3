@@ -86,23 +86,31 @@ function Encode() {
 
     var bitrate = Math.ceil(66.551 * Math.pow(vid.width() * vid.height(), 0.3147));
 
-    var bufsize = 2 * bitrate;
-    var maxrate = Math.max(10000, bitrate);
+    // var bufsize = 2 * bitrate;
+    var maxrate = Math.max(40000, bitrate * 1000);
+    var bufsize = Math.max(30000, 2 * bitrate * 1000);
 
-    pass1.addOptions('-preset slow')
-      .addOptions('-pix_fmt yuv420p')
-      .addOptions('-profile:v high')
-      .addOptions('-level 4.0')
-      .addOptions('-maxrate '+ maxrate + 'k')
-      .addOptions('-crf 18')
-      .addOptions('-movflags +faststart');
+    pass1
+      .addOptions("-preset slow")
+      .addOptions("-pix_fmt yuv420p")
+      .addOptions("-profile:v high")
+      .addOptions("-level 4.0")
+      .addOptions("-maxrate " + maxrate)
+      .addOptions("-bufsize " + bufsize)
+      .addOptions("-crf 18")
+      .addOptions("-movflags +faststart");
 
-      // set audio codec options
-      if (llama.vid().audioPath()) {
-        pass1.input(llama.vid().audioPath());
-      }
+    // set audio codec options
+    if (llama.vid().audioPath()) {
+      pass1.input(llama.vid().audioPath());
+    }
 
-      pass1.audioCodec('aac')
+    // set audio codec options
+    if (llama.vid().audioPath()) {
+      pass1.input(llama.vid().audioPath());
+    }
+
+    pass1.audioCodec('aac')
       .audioBitrate(256)
       .audioChannels(2)
       .audioFrequency(48000)
