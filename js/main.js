@@ -20,7 +20,16 @@ gui.App.on('reopen', function() {
 });
 
 $(function() {
-  win.maximize();
+  var storedWinsize = winSize
+    .findOne({ _id: "window" })
+    .exec(function(err, data) {
+      if (data) {
+        win.resizeTo(data.width, data.height);
+        if (data.isFullScreen) {
+          win.maximize();
+        }
+      }
+    });
   win.show();
   // Register dev console to ctrl+d
   $("body").on('keypress', function(e) {
@@ -67,8 +76,26 @@ var analysis = new Datastore({
   filename: path.join(require('nw.gui').App.dataPath, 'analysis.db'),
   autoload: true
 });
+var winSize = new Datastore({
+  filename: path.join(require("nw.gui").App.dataPath, "window.db"),
+  autoload: true
+});
 
+win.on("resize", function(width, height) {
+  winSize.update(
+    { _id: "window" },
+    { $set: { width: width, height: height } },
+    { upsert: true }
+  );
+});
 
+win.on("maximize", function() {
+  winSize.update({ _id: "window" }, { $set: { isFullScreen: true } });
+});
+
+win.on("unmaximize", function() {
+  winSize.update({ _id: "window" }, { $set: { isFullScreen: false } });
+});
 
 var goodInfoKeys = ["nb_streams", "nb_programs", "format_name", "start_time", "duration", "size", "bit_rate", "codec_name", "profile", "codec_type", "codec_time_base", "codec_tag_string", "width", "height", "has_b_frames", "sample_aspect_ratio", "display_aspect_ratio", "pix_fmt", "level", "color_range", "color_space", "color_transfer", "color_primaries", "chroma_location", "timecode", "is_avc", "r_frame_rate", "avg_frame_rate", "time_base", "start_pts", "duration_ts", "max_bit_rate", "bits_per_raw_sample", "nb_frames", "nb_read_frames", "nb_read_packets", "sample_fmt", "sample_rate", "channels", "channel_layout", "bits_per_sample"];
 

@@ -6,7 +6,7 @@
   "author": "Ian Roberts <ian@absolutedestiny.org>",
   "window": {
     "title": "LlamaEnc3",
-    "toolbar": true,
+    "toolbar": false,
     "frame": true,
     "show": false,
     "icon": "llama.png",
