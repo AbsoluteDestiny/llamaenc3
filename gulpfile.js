@@ -54,7 +54,7 @@ gulp.task("nw", ["clean"], function() {
   var nw = new NwBuilder({
     version: "0.38.3",
     files: files,
-    platforms: ["win32", "win64", "linux64", "linux32"],
+    platforms: ["win64", "osx64"],
     zip: false,
     macIcns: "./llama.icns",
     winIco: "./llama.ico"
@@ -69,34 +69,15 @@ gulp.task("nw", ["clean"], function() {
   });
 });
 
-gulp.task("build", ["nw"], function() {
-  var linux32 = gulpFilter("**/linux32/**");
-  var linux64 = gulpFilter("**/linux64/**");
-  var win32 = gulpFilter("**/win32/**");
-  var win64 = gulpFilter("**/win64/**");
-  var osx64 = gulpFilter("**/osx64/**");
-  return gulp
-    .src(["bin/**/**"])
-    .pipe(win64)
-    .pipe(flatten())
-    .pipe(gulp.dest(binMap["win64"]))
-    .pipe(linux32)
-    .pipe(flatten())
-    .pipe(gulp.dest(binMap["linux32"]))
-    .pipe(linux32.restore)
-    .pipe(linux64)
-    .pipe(flatten())
-    .pipe(gulp.dest(binMap["linux64"]))
-    .pipe(linux64.restore)
-    .pipe(win32)
-    .pipe(flatten())
-    .pipe(gulp.dest(binMap["win32"]))
-    .pipe(win32.restore)
-    .pipe(osx64)
-    .pipe(flatten())
-    .pipe(gulp.dest(binMap["osx64"]))
-    .pipe(osx64.restore);
+gulp.task("win64", ["nw"], function() {
+  return gulp.src(["bin/win64/**"]).pipe(gulp.dest(binMap["win64"]));
 });
+
+gulp.task("osx64", ["nw"], function() {
+  return gulp.src(["bin/osx64/**"]).pipe(gulp.dest(binMap["osx64"]));
+});
+
+gulp.task("build", ["nw", "win64", "osx64"]);
 
 gulp.task("zip", ["cleandist"], function(cb) {
   var fs = require("fs");
