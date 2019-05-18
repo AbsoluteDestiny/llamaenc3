@@ -274,7 +274,7 @@ var VidModel = function(llama, path) {
   self.bff = ko.observable(0);
   self.suggest_fo = ko.observable("");
   self.fo_choice = ko.observable("");
-  
+
   self.parOptions = ko.observableArray([
     {value:1, ffmpeg: 1, text: "Square Pixels (1.0)"},
     {value:10/11, ffmpeg: 8/9, text: "4:3 NTSC DVD (0.90)"},
@@ -440,7 +440,7 @@ var LLamaModel = function () {
   // Temporary file management
   self.logpath = ko.observable("");
   self.thumbpath = ko.observable("");
-  
+
   // Vid info
   self.vid.subscribe(function() {
     if (self.vid()) {

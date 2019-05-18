@@ -104,7 +104,7 @@
 					  // Use the native click() of the file input.
 					  document.querySelector('#open').click();
 					}, false);
-					</script>	
+					</script>
 				</div>
 				<div class="container" data-bind="visible: step() === 1">
 					<div class="row" data-bind="if: vid()">
@@ -140,10 +140,10 @@
 											<button type="button" class="btn btn-primary btn-lg pull-right" data-bind="disable: !vid().fieldOptionsReady(), click: function() { step(2); }">Continue</button>
 										</div>
 
-							</form> 
+							</form>
 						</div>
 					</div>
-					
+
 				</div>
 				<!-- /.container -->
 				<div class="container" data-bind="visible: step() === 2">
@@ -275,12 +275,12 @@
 							<div class="row tacenter">
 								<div class="col-xs-12">
 										<div data-bind="visible: vid().do_crop(), style: {width: vid().scaledstartwidth() + 100 + 'px', height: '74px', position: 'relative', margin: '0 auto'}">
-											
+
 										</div>
-										
+
 								</div>
 							</div>
-							
+
 						</div> -->
 					</div>
 				</div>
@@ -318,9 +318,9 @@
 									<label for="vidtitle">Vid Title:</label>
 									<input id="vidtitle" class="form-control" type="text" data-bind="textInput: vid().title"/>
 								</div>
-								
+
 								<div class="form-group">
-									
+
 								</div>
 							</div>
 						</div>
@@ -351,7 +351,7 @@
 								</div>
 							</div>
 						</div>
-						
+
 					</div>
 					<div class="row" data-bind="if: vid(), visible: !in_progress()">
 						<div class="col-xs-12 col-md-6">
@@ -459,7 +459,7 @@
 								  </div>
 							</div>
 							<h1></h1>
-							
+
 							<p data-bind="visible: errorMessage">This error has been copied to the clipboard.</p>
 						</div>
 					</div>

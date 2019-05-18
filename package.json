@@ -1,37 +1,15 @@
 {
-  "name": "LlamaEnc3",
+  "name": "llamaenc3",
   "version": "3.4.0",
-  "main": "./html/index.html",
+  "main": "index.js",
   "description": "An ffmpeg wrapper for encoding videos for Vividcon and the Vidding community",
   "author": "Ian Roberts <ian@absolutedestiny.org>",
   "window": {
-    "title": "LlamaEnc3",
-    "toolbar": false,
-    "frame": true,
-    "show": false,
-    "icon": "llama.png",
-    "position": "center"
-  },
-  "platformOverrides": {
-    "win": {
-      "window": {
-        "toolbar": false
-      }
-    },
-    "osx": {
-      "window": {
-        "toolbar": false
-      }
-    },
-    "linux": {
-      "window": {
-        "toolbar": false
-      }
-    }
+    "toolbar": true
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AbsoluteDestiny/LlamaEnc3"
+    "url": "git+https://github.com/AbsoluteDestiny/LlamaEnc3.git"
   },
   "bugs": {
     "url": "https://github.com/AbsoluteDestiny/LlamaEnc3/issues"
@@ -46,7 +24,7 @@
     "jQuery": "1.7.4",
     "lodash": "2.4.1",
     "nedb": "^1.1.1",
-    "node-ffprobe": "git://github.com/nuky89/node-ffprobe",
+    "node-ffprobe": "git://github.com/nuky89/node-ffprobe.git",
     "open": "https://registry.npmjs.org/open/-/open-0.0.5.tgz",
     "sanitize-filename": "^1.1.1",
     "semver": "^4.2.0",
@@ -69,5 +47,9 @@
     "gulp-jszip": "^0.1.2",
     "gulp-zip": "^2.0.3",
     "nw-builder": "^2.2.0"
+  },
+  "homepage": "https://github.com/AbsoluteDestiny/LlamaEnc3#readme",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }

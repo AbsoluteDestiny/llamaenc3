@@ -110,7 +110,7 @@ function Encode() {
       pass1.input(llama.vid().audioPath());
     }
 
-    pass1.audioCodec('aac')
+    pass1.audioCodec('fdk-aac')
       .audioBitrate(256)
       .audioChannels(2)
       .audioFrequency(48000)
