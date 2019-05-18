@@ -1,7 +1,7 @@
 {
   "name": "llamaenc3",
   "version": "3.4.0",
-  "main": "index.js",
+  "main": "./html/index.html",
   "description": "An ffmpeg wrapper for encoding videos for Vividcon and the Vidding community",
   "author": "Ian Roberts <ian@absolutedestiny.org>",
   "window": {
@@ -15,38 +15,38 @@
     "url": "https://github.com/AbsoluteDestiny/LlamaEnc3/issues"
   },
   "dependencies": {
-    "async": "0.9.0",
-    "del": "^1.1.1",
+    "@octokit/rest": "^16.26.0",
+    "async": "2.6.2",
+    "del": "^4.1.1",
     "file-extractor": "^0.6.1",
     "fluent-ffmpeg": "https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/tarball/master",
     "github": "^0.2.3",
     "humanize-duration": "^3.7.0",
-    "jQuery": "1.7.4",
+    "jquery": "^3.4.1",
     "lodash": "2.4.1",
     "nedb": "^1.1.1",
     "node-ffprobe": "git://github.com/nuky89/node-ffprobe.git",
     "open": "https://registry.npmjs.org/open/-/open-0.0.5.tgz",
     "sanitize-filename": "^1.1.1",
-    "semver": "^4.2.0",
-    "slice-file": "0.2.1",
-    "temp": "^0.8.1"
+    "semver": "^6.0.0",
+    "slice-file": "1.0.0",
+    "temp": "^0.9.0"
   },
   "preferGlobal": true,
   "private": true,
   "analyze": true,
   "license": "MIT",
   "devDependencies": {
-    "archiver": "^1.0.0",
-    "async": "^0.9.0",
+    "archiver": "^3.0.0",
     "glob-copy": "^0.1.0",
     "gulp": "^3.9.1",
     "gulp-archiver": "^1.0.0",
     "gulp-browserify": "^0.5.1",
-    "gulp-filter": "^2.0.0",
-    "gulp-flatten": "0.0.4",
+    "gulp-filter": "^5.1.0",
+    "gulp-flatten": "0.4.0",
     "gulp-jszip": "^0.1.2",
-    "gulp-zip": "^2.0.3",
-    "nw-builder": "^2.2.0"
+    "gulp-zip": "^4.2.0",
+    "nw-builder": "^3.5.7"
   },
   "homepage": "https://github.com/AbsoluteDestiny/LlamaEnc3#readme",
   "scripts": {

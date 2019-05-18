@@ -1,3 +1,4 @@
 {
-    "python.pythonPath": "C:\\Users\\AbsoluteDestiny\\.virtualenvs\\fanworks-2LvjlmZZ\\scripts\\python.exe"
+    "python.pythonPath": "C:\\Users\\AbsoluteDestiny\\.virtualenvs\\fanworks-2LvjlmZZ\\scripts\\python.exe",
+    "git.ignoreLimitWarning": true
 }
